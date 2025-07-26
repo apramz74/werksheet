@@ -71,30 +71,30 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({ problems, settings 
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: '1fr', 
-        gap: '12px',
-        marginBottom: '20px'
+        gap: '18px',
+        marginBottom: '24px'
       }}>
         {validProblems.map((problem, index) => (
           <div key={problem.id} style={{ 
-            padding: '12px',
+            padding: '16px 20px',
             border: '1px solid #e0e0e0',
-            borderRadius: '4px',
+            borderRadius: '6px',
             backgroundColor: '#fafafa',
-            minHeight: '40px'
+            minHeight: '50px'
           }}>
             <div style={{ width: '100%' }}>
               {/* Question */}
               <div style={{ 
-                fontSize: '1.1em', 
+                fontSize: '1.6em', 
                 fontFamily: 'monospace',
                 color: '#333',
-                lineHeight: '1.4',
+                lineHeight: '1.5',
                 marginBottom: '0px'
               }}>
                 <span style={{ 
                   fontSize: '1em',
                   color: '#666',
-                  marginRight: '8px',
+                  marginRight: '12px',
                   fontWeight: 'bold'
                 }}>
                   {index + 1}.

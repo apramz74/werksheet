@@ -71,7 +71,6 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
 
   const handleCreate = () => {
     onCreate(selectedType);
-    onClose();
   };
 
   if (!isOpen) return null;

@@ -59,29 +59,6 @@ const ProblemList: React.FC<ProblemListProps> = ({
         <div style={{ 
           backgroundColor: 'transparent'
         }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            alignItems: 'center',
-            marginBottom: '20px'
-          }}>
-            <button
-              onClick={() => handleShowCreateModal(problems.length - 1)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
-              + Add Problem
-            </button>
-          </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {problems.map((problem, index) => (
               <ProblemEditor

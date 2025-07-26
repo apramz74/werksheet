@@ -3,6 +3,7 @@ import './App.css';
 import { WorksheetSettings, MathProblem } from './types';
 import WorksheetPreview from './components/WorksheetPreview';
 import ProblemList from './components/ProblemList';
+import CreateProblemModal from './components/CreateProblemModal';
 import { exportToPDF } from './utils/pdfExport';
 import { MathFormatter } from './utils/mathFormatter';
 
@@ -15,6 +16,8 @@ function App() {
 
   const [problems, setProblems] = useState<MathProblem[]>([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [pendingAfterIndex, setPendingAfterIndex] = useState<number>(-1);
 
   const createNewProblem = (): MathProblem => MathFormatter.createBlankProblem();
 
@@ -42,6 +45,20 @@ function App() {
       newProblems.splice(afterIndex + 1, 0, newProblem);
       return newProblems;
     });
+  };
+
+  const handleShowCreateModal = (afterIndex: number) => {
+    setPendingAfterIndex(afterIndex);
+    setShowCreateModal(true);
+  };
+
+  const handleCreateProblem = (problemType: string) => {
+    // For now, only handle basic-equation type
+    if (problemType === 'basic-equation') {
+      handleAddProblem(pendingAfterIndex);
+    }
+    setShowCreateModal(false);
+    setPendingAfterIndex(-1);
   };
 
   const handleExportPDF = async () => {
@@ -135,19 +152,43 @@ function App() {
           }}>
             {/* Problems Section */}
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              <h2 style={{ 
-                fontSize: '18px', 
-                fontWeight: '600', 
-                color: '#333',
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
                 margin: '0 0 20px 0'
               }}>
-                Problems
-              </h2>
+                <h2 style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  color: '#333',
+                  margin: '0'
+                }}>
+                  Problems
+                </h2>
+                {problems.length > 0 && (
+                  <button
+                    onClick={() => handleShowCreateModal(problems.length - 1)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    + Add Problem
+                  </button>
+                )}
+              </div>
               <ProblemList
                 problems={problems}
                 onUpdateProblem={handleUpdateProblem}
                 onDeleteProblem={handleDeleteProblem}
-                onAddProblem={handleAddProblem}
+                onAddProblem={handleShowCreateModal}
               />
             </div>
 
@@ -173,8 +214,8 @@ function App() {
                 boxSizing: 'border-box'
               }}>
                 <div style={{ 
-                  fontSize: '9px',
-                  lineHeight: '1.1',
+                  fontSize: '12px',
+                  lineHeight: '1.2',
                   width: '100%',
                   maxWidth: '100%',
                   overflow: 'hidden'
@@ -186,6 +227,13 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Create Problem Modal */}
+      <CreateProblemModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={handleCreateProblem}
+      />
     </div>
   );
 }

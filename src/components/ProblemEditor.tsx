@@ -30,6 +30,13 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isEditing && editingField === null) {
+      // Auto-focus first field when entering editing mode
+      setEditingField('left');
+    }
+  }, [isEditing, editingField]);
+
+  useEffect(() => {
     if (isEditing && editingField === 'left' && leftInputRef.current) {
       leftInputRef.current.focus();
       leftInputRef.current.select();
@@ -181,11 +188,11 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
               style={{
                 padding: '4px 8px',
                 fontSize: '11px',
-                border: '1px solid #d69e2e',
+                border: '1px solid #a0aec0',
                 borderRadius: '4px',
-                backgroundColor: '#fef5e7',
+                backgroundColor: '#f7fafc',
                 cursor: 'pointer',
-                color: '#d69e2e',
+                color: '#4a5568',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
