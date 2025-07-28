@@ -58,7 +58,7 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
       title: 'Multiple Choice',
       description: 'Questions with answer options',
       example: 'What is 2 + 2? A) 3 B) 4',
-      available: false
+      available: true
     },
     {
       id: 'fill-blanks',

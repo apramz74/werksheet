@@ -4,7 +4,7 @@ import { WorksheetSettings, MathProblem } from './types';
 import WorksheetPreview from './components/WorksheetPreview';
 import ProblemList from './components/ProblemList';
 import CreateProblemModal from './components/CreateProblemModal';
-import { exportToPDF } from './utils/pdfExport';
+import { generateProgrammaticPDF } from './utils/pdfExport';
 import { MathFormatter } from './utils/mathFormatter';
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingAfterIndex, setPendingAfterIndex] = useState<number>(-1);
 
-  const createNewProblem = (): MathProblem => MathFormatter.createBlankProblem();
+  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
 
 
   const handleUpdateProblem = (index: number, updatedProblem: MathProblem) => {
@@ -38,10 +38,10 @@ function App() {
     setProblems(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddProblem = (afterIndex: number) => {
+  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' = 'basic-equation') => {
     setProblems(prev => {
       const newProblems = [...prev];
-      const newProblem = createNewProblem();
+      const newProblem = createNewProblem(type);
       newProblems.splice(afterIndex + 1, 0, newProblem);
       return newProblems;
     });
@@ -53,9 +53,8 @@ function App() {
   };
 
   const handleCreateProblem = (problemType: string) => {
-    // For now, only handle basic-equation type
-    if (problemType === 'basic-equation') {
-      handleAddProblem(pendingAfterIndex);
+    if (problemType === 'basic-equation' || problemType === 'multiple-choice') {
+      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice');
     }
     setShowCreateModal(false);
     setPendingAfterIndex(-1);
@@ -71,7 +70,11 @@ function App() {
 
     setIsExporting(true);
     try {
-      await exportToPDF('worksheet-preview', `${settings.title.replace(/\s+/g, '_')}.pdf`);
+      generateProgrammaticPDF({
+        problems: validProblems,
+        settings,
+        filename: `${settings.title.replace(/\s+/g, '_')}.pdf`
+      });
     } catch (error) {
       alert('Failed to export PDF. Please try again.');
     } finally {

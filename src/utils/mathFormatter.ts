@@ -24,25 +24,58 @@ export class MathFormatter {
   }
 
   public static validateProblem(problem: MathProblem): boolean {
-    return (
-      this.validateNumber(problem.leftOperand) &&
-      this.validateOperator(problem.operator) &&
-      this.validateNumber(problem.rightOperand)
-    );
+    if (problem.type === 'multiple-choice') {
+      return (
+        Boolean(problem.question && problem.question.trim()) &&
+        Boolean(problem.options && problem.options.length >= 2) &&
+        Boolean(problem.options && problem.options.every(option => Boolean(option && option.trim())))
+      );
+    } else {
+      // Basic equation validation
+      return (
+        Boolean(problem.leftOperand) &&
+        this.validateNumber(problem.leftOperand || '') &&
+        this.validateOperator(problem.operator || '') &&
+        Boolean(problem.rightOperand) &&
+        this.validateNumber(problem.rightOperand || '')
+      );
+    }
   }
 
-  public static createBlankProblem(): MathProblem {
+  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' = 'basic-equation'): MathProblem {
+    if (type === 'multiple-choice') {
+      return this.createBlankMultipleChoice();
+    } else {
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'basic-equation',
+        leftOperand: '2',
+        operator: '+',
+        rightOperand: '3',
+        isEditing: true
+      };
+    }
+  }
+
+  public static createBlankMultipleChoice(): MathProblem {
     return {
       id: Math.random().toString(36).substr(2, 9),
-      leftOperand: '2',
-      operator: '+',
-      rightOperand: '3',
+      type: 'multiple-choice',
+      question: 'What is 2 + 2?',
+      options: ['3', '4'],
       isEditing: true
     };
   }
 
   public static formatForDisplay(problem: MathProblem): string {
-    return `${problem.leftOperand} ${problem.operator} ${problem.rightOperand} = ____`;
+    if (problem.type === 'multiple-choice') {
+      const optionsText = problem.options?.map((option, index) => 
+        `${String.fromCharCode(65 + index)}) ${option}`
+      ).join('\n') || '';
+      return `${problem.question || ''}\n${optionsText}`;
+    } else {
+      return `${problem.leftOperand || ''} ${problem.operator || ''} ${problem.rightOperand || ''} = ____`;
+    }
   }
 
   // Legacy support for migrating existing data
@@ -80,6 +113,7 @@ export class MathFormatter {
       
       return {
         id: Math.random().toString(36).substr(2, 9),
+        type: 'basic-equation',
         leftOperand,
         operator,
         rightOperand
