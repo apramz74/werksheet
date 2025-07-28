@@ -1,5 +1,5 @@
 import React from 'react';
-import { MathProblem, WorksheetSettings, formatMathProblem } from '../types';
+import { MathProblem, WorksheetSettings } from '../types';
 import { MathFormatter } from '../utils/mathFormatter';
 
 interface WorksheetPreviewProps {

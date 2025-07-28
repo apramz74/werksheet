@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MathProblem, formatMathProblem } from '../types';
+import { MathProblem } from '../types';
 import { MathFormatter } from '../utils/mathFormatter';
 
 interface ProblemEditModalProps {

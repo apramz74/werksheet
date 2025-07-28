@@ -34,7 +34,6 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
   const pageWidth = 8.5;
   const pageHeight = 11;
   const margin = 0.75;
-  const contentWidth = pageWidth - (margin * 2);
   
   let currentY = margin;
 
