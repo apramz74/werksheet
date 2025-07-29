@@ -18,9 +18,19 @@ function App() {
   const [isExporting, setIsExporting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingAfterIndex, setPendingAfterIndex] = useState<number>(-1);
+  
+  // Navigation state for preview
+  const [navigationState, setNavigationState] = useState<{
+    currentPage: number;
+    totalPages: number;
+    handlers: { handlePrevPage: () => void, handleNextPage: () => void };
+  } | null>(null);
 
   const createNewProblem = (type: 'basic-equation' | 'multiple-choice' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
 
+  const handleNavigationChange = (currentPage: number, totalPages: number, handlers: { handlePrevPage: () => void, handleNextPage: () => void }) => {
+    setNavigationState({ currentPage, totalPages, handlers });
+  };
 
   const handleUpdateProblem = (index: number, updatedProblem: MathProblem) => {
     setProblems(prev => {
@@ -197,14 +207,82 @@ function App() {
 
             {/* Integrated Preview Section */}
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              <h3 style={{ 
-                fontSize: '18px', 
-                fontWeight: '600', 
-                color: '#333',
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
                 margin: '0 0 20px 0'
               }}>
-                Live preview
-              </h3>
+                <h3 style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  color: '#333',
+                  margin: '0'
+                }}>
+                  Live preview
+                </h3>
+                
+                {/* Navigation controls */}
+                {navigationState && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#4a5568'
+                    }}>
+                      Page {navigationState.currentPage + 1}/{navigationState.totalPages}
+                    </span>
+                    
+                    <button
+                      onClick={navigationState.handlers.handlePrevPage}
+                      disabled={navigationState.currentPage === 0}
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        backgroundColor: navigationState.currentPage === 0 ? '#f3f4f6' : 'white',
+                        color: navigationState.currentPage === 0 ? '#9ca3af' : '#374151',
+                        cursor: navigationState.currentPage === 0 ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}
+                      title="Previous page"
+                    >
+                      &lt;
+                    </button>
+                    
+                    <button
+                      onClick={navigationState.handlers.handleNextPage}
+                      disabled={navigationState.currentPage >= navigationState.totalPages - 1}
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        backgroundColor: navigationState.currentPage >= navigationState.totalPages - 1 ? '#f3f4f6' : 'white',
+                        color: navigationState.currentPage >= navigationState.totalPages - 1 ? '#9ca3af' : '#374151',
+                        cursor: navigationState.currentPage >= navigationState.totalPages - 1 ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}
+                      title="Next page"
+                    >
+                      &gt;
+                    </button>
+                  </div>
+                )}
+              </div>
               <div style={{ 
                 backgroundColor: 'white',
                 borderRadius: '8px',
@@ -223,7 +301,11 @@ function App() {
                   maxWidth: '100%',
                   overflow: 'hidden'
                 }}>
-                  <WorksheetPreview problems={problems} settings={settings} />
+                  <WorksheetPreview 
+                    problems={problems} 
+                    settings={settings} 
+                    onNavigationChange={handleNavigationChange}
+                  />
                 </div>
               </div>
             </div>
