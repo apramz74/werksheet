@@ -29,7 +29,8 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
   );
 
   // Pagination state
-  const pages = paginateProblems(validProblems);
+  const hasFootnote = settings.footnote.trim().length > 0;
+  const pages = paginateProblems(validProblems, hasFootnote);
   const [currentPage, setCurrentPage] = useState(0);
 
   // Auto-navigate to last page when new problems are added
@@ -251,6 +252,24 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
               );
             })}
           </div>
+
+          {/* Footnote */}
+          {settings.footnote.trim() && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: `${PAGE_DIMENSIONS_PX.margin + 0.2 * 96}px`,
+                left: "0",
+                right: "0",
+                textAlign: "center",
+                fontSize: `${FONT_SIZES.footer}px`,
+                fontFamily: "Helvetica, Arial, sans-serif",
+                color: "#000",
+              }}
+            >
+              {settings.footnote}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -40,7 +40,8 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
   const margin = PAGE_DIMENSIONS.margin;
   
   // Use pagination logic to split problems across pages
-  const pages = paginateProblems(validProblems);
+  const hasFootnote = settings.footnote.trim().length > 0;
+  const pages = paginateProblems(validProblems, hasFootnote);
   
   pages.forEach((pageProblems, pageIndex) => {
     if (pageIndex > 0) {
@@ -103,6 +104,14 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
 
       currentY += SPACING.problemSpacing;
     });
+
+    // Add footnote at bottom of page if present
+    if (settings.footnote.trim()) {
+      const footnoteY = PAGE_DIMENSIONS.height - margin - 0.2; // Position near bottom margin
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(settings.footnote, pageWidth / 2, footnoteY, { align: 'center' });
+    }
 
   });
 

@@ -26,6 +26,7 @@ export const SPACING = {
   multipleChoiceQuestionHeight: 0.25,
   multipleChoiceOptionHeight: 0.2,
   footerHeight: 0.3,
+  footnoteHeight: 0.4, // Space reserved for footnote (font height + margin)
   pageBreakThreshold: 1.5, // When to start new page (distance from bottom)
 } as const;
 
@@ -40,7 +41,7 @@ export const FONT_SIZES = {
   nameDate: 12 * (DPI / 72),
   problemNumber: 14 * (DPI / 72),
   problemText: 14 * (DPI / 72),
-  footer: 8 * (DPI / 72),
+  footer: 10 * (DPI / 72),
 } as const;
 
 /**
@@ -76,34 +77,33 @@ export function calculateProblemHeight(problem: MathProblem): number {
  * Calculate the height of the worksheet header
  */
 export function calculateHeaderHeight(): number {
-  // Title + spacing + name/date line + spacing + horizontal line + spacing
-  const titleHeight = (FONT_SIZES.title / DPI) + SPACING.headerSpacing;
-  const nameLineHeight = SPACING.nameLineSpacing + SPACING.nameLineHeight;
-  const horizontalLineHeight = SPACING.horizontalLineSpacing;
+  // Title + spacing (simplified header - no name/date lines or horizontal divider)
+  const titleHeight = (FONT_SIZES.title / DPI) + SPACING.headerSpacing + 0.4; // Extra space after title
   
-  return titleHeight + nameLineHeight + horizontalLineHeight;
+  return titleHeight;
 }
 
 /**
  * Calculate the available content height per page
  */
-export function calculateContentHeight(): number {
+export function calculateContentHeight(hasFootnote: boolean = false): number {
+  const footnoteSpace = hasFootnote ? SPACING.footnoteHeight : 0;
   return (
     PAGE_DIMENSIONS.height -
     PAGE_DIMENSIONS.margin * 2 -
     calculateHeaderHeight() -
-    SPACING.footerHeight
+    footnoteSpace
   );
 }
 
 /**
  * Split problems into pages based on height calculations
  */
-export function paginateProblems(problems: MathProblem[]): MathProblem[][] {
+export function paginateProblems(problems: MathProblem[], hasFootnote: boolean = false): MathProblem[][] {
   const pages: MathProblem[][] = [];
   let currentPage: MathProblem[] = [];
   let currentPageHeight = 0;
-  const maxContentHeight = calculateContentHeight();
+  const maxContentHeight = calculateContentHeight(hasFootnote);
 
   problems.forEach((problem) => {
     const problemHeight = calculateProblemHeight(problem);
@@ -133,19 +133,19 @@ export function paginateProblems(problems: MathProblem[]): MathProblem[][] {
 /**
  * Calculate remaining space on a page
  */
-export function calculateRemainingSpace(problems: MathProblem[]): number {
+export function calculateRemainingSpace(problems: MathProblem[], hasFootnote: boolean = false): number {
   const totalHeight = problems.reduce((sum, problem) => sum + calculateProblemHeight(problem), 0);
-  return Math.max(0, calculateContentHeight() - totalHeight);
+  return Math.max(0, calculateContentHeight(hasFootnote) - totalHeight);
 }
 
 /**
  * Calculate how many more problems of each type could fit on current page
  */
-export function calculateRemainingCapacity(currentProblems: MathProblem[]): {
+export function calculateRemainingCapacity(currentProblems: MathProblem[], hasFootnote: boolean = false): {
   basicEquations: number;
   multipleChoice: number;
 } {
-  const remainingSpace = calculateRemainingSpace(currentProblems);
+  const remainingSpace = calculateRemainingSpace(currentProblems, hasFootnote);
   const basicEquationHeight = calculateBasicEquationHeight();
   const multipleChoiceHeight = calculateMultipleChoiceHeight(4); // Assume average of 4 options
 

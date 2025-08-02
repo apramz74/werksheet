@@ -8,13 +8,15 @@ interface ProblemListProps {
   onUpdateProblem: (index: number, problem: MathProblem) => void;
   onDeleteProblem: (index: number) => void;
   onAddProblem: (index: number) => void;
+  onStartAiGeneration: () => void;
 }
 
 const ProblemList: React.FC<ProblemListProps> = ({
   problems,
   onUpdateProblem,
   onDeleteProblem,
-  onAddProblem
+  onAddProblem,
+  onStartAiGeneration
 }) => {
   const handleUpdateProblem = (index: number, updatedProblem: MathProblem) => {
     onUpdateProblem(index, updatedProblem);
@@ -35,7 +37,10 @@ const ProblemList: React.FC<ProblemListProps> = ({
     <>
       {problems.length === 0 ? (
         // Show empty state if no problems
-        <EmptyState onCreateProblem={handleCreateFirstProblem} />
+        <EmptyState 
+          onCreateProblem={handleCreateFirstProblem}
+          onStartAiGeneration={onStartAiGeneration}
+        />
       ) : (
         // Show problem list if problems exist
         <div style={{ 

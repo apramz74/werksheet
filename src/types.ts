@@ -37,6 +37,7 @@ export interface WorksheetSettings {
   title: string;
   numberOfProblems: number;
   showAnswers: boolean;
+  footnote: string;
 }
 
 export interface MathExpression {
