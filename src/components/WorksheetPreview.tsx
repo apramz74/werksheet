@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MathProblem, WorksheetSettings } from "../types";
 import { MathFormatter } from "../utils/mathFormatter";
 import {
@@ -33,6 +33,18 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
   const pages = paginateProblems(validProblems, hasFootnote);
   const [currentPage, setCurrentPage] = useState(0);
 
+  const handlePrevPage = useCallback(() => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  }, [currentPage]);
+
+  const handleNextPage = useCallback(() => {
+    if (currentPage < pages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  }, [currentPage, pages.length]);
+
   // Auto-navigate to last page when new problems are added
   useEffect(() => {
     if (pages.length > 0 && currentPage >= pages.length) {
@@ -48,19 +60,7 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
         handleNextPage,
       });
     }
-  }, [currentPage, pages.length, onNavigationChange]);
-
-  const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < pages.length - 1) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  }, [currentPage, pages.length, onNavigationChange, handlePrevPage, handleNextPage]);
 
   if (validProblems.length === 0) {
     return (
