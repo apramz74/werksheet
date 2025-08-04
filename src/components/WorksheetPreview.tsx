@@ -222,6 +222,28 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                           ))}
                         </div>
                       </div>
+                    ) : problem.type === "word-problem" ? (
+                      <div>
+                        <div
+                          style={{
+                            fontSize: `${FONT_SIZES.problemText}px`,
+                            fontWeight: "normal",
+                            color: "#000",
+                            fontFamily: "Helvetica, Arial, sans-serif",
+                            lineHeight: "1.4",
+                            marginBottom: `${0.2 * 96}px`, // 0.2 inches spacing
+                          }}
+                        >
+                          {problem.problemText}
+                        </div>
+                        <div
+                          style={{
+                            borderBottom: "1px solid #000",
+                            width: `${2 * 96}px`, // 2 inches wide
+                            height: "16px",
+                          }}
+                        ></div>
+                      </div>
                     ) : (
                       <div
                         style={{

@@ -19,7 +19,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   onAddAfter 
 }) => {
   const [isEditing, setIsEditing] = useState(problem.isEditing || false);
-  const [editingField, setEditingField] = useState<'left' | 'operator' | 'right' | 'question' | number | null>(null);
+  const [editingField, setEditingField] = useState<'left' | 'operator' | 'right' | 'question' | 'problemText' | number | null>(null);
   
   // Basic equation state
   const [leftOperand, setLeftOperand] = useState(problem.leftOperand || '');
@@ -30,12 +30,16 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   const [question, setQuestion] = useState(problem.question || '');
   const [options, setOptions] = useState(problem.options || ['', '']);
   
+  // Word problem state
+  const [problemText, setProblemText] = useState(problem.problemText || '');
+  
   const [showEditModal, setShowEditModal] = useState(false);
   const leftInputRef = useRef<HTMLInputElement>(null);
   const rightInputRef = useRef<HTMLInputElement>(null);
   const operatorSelectRef = useRef<HTMLSelectElement>(null);
   const questionInputRef = useRef<HTMLInputElement>(null);
   const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const problemTextRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,6 +47,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       // Auto-focus first field when entering editing mode based on problem type
       if (problem.type === 'multiple-choice') {
         setEditingField('question');
+      } else if (problem.type === 'word-problem') {
+        setEditingField('problemText');
       } else {
         setEditingField('left');
       }
@@ -60,6 +66,9 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       } else if (editingField === 'question' && questionInputRef.current) {
         questionInputRef.current.focus();
         questionInputRef.current.select();
+      } else if (editingField === 'problemText' && problemTextRef.current) {
+        problemTextRef.current.focus();
+        problemTextRef.current.select();
       } else if (typeof editingField === 'number' && optionInputRefs.current[editingField]) {
         optionInputRefs.current[editingField]?.focus();
         optionInputRefs.current[editingField]?.select();
@@ -73,6 +82,9 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       setEditingField('question');
       setQuestion(problem.question || '');
       setOptions(problem.options || ['', '']);
+    } else if (problem.type === 'word-problem') {
+      setEditingField('problemText');
+      setProblemText(problem.problemText || '');
     } else {
       setEditingField('left');
       setLeftOperand(problem.leftOperand || '');
@@ -89,6 +101,12 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
         ...problem,
         question,
         options,
+        isEditing: false
+      };
+    } else if (problem.type === 'word-problem') {
+      updatedProblem = {
+        ...problem,
+        problemText,
         isEditing: false
       };
     } else {
@@ -231,7 +249,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
             <span style={{ 
-              fontSize: '14px', 
+              fontSize: '12px', 
               color: '#718096', 
               fontWeight: '600',
               minWidth: '20px'
@@ -239,7 +257,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
               {index + 1}.
             </span>
             <span style={{ 
-              fontSize: '16px',
+              fontSize: '13px',
               fontFamily: 'monospace',
               color: validation.isValid ? '#2d3748' : '#e53e3e',
               flex: 1
@@ -368,6 +386,14 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   onFocus={() => setEditingField('question')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setIsEditing(false);
+                      setEditingField(null);
+                      setQuestion(problem.question || '');
+                      setOptions(problem.options || ['', '']);
+                    }
+                  }}
                   onBlur={(e) => {
                     const relatedTarget = e.relatedTarget as HTMLElement;
                     if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
@@ -432,6 +458,14 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                         value={option}
                         onChange={(e) => handleOptionChange(index, e.target.value)}
                         onFocus={() => setEditingField(index)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setIsEditing(false);
+                            setEditingField(null);
+                            setQuestion(problem.question || '');
+                            setOptions(problem.options || ['', '']);
+                          }
+                        }}
                         onBlur={(e) => {
                           const relatedTarget = e.relatedTarget as HTMLElement;
                           if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
@@ -486,6 +520,60 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                     + Add Option
                   </button>
                 </div>
+              </div>
+            </div>
+          ) : problem.type === 'word-problem' ? (
+            /* Word Problem Editing */
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ 
+                display: 'block', 
+                fontSize: '12px', 
+                fontWeight: '500', 
+                color: '#4a5568',
+                marginBottom: '6px'
+              }}>
+                Word Problem:
+              </label>
+              <textarea
+                ref={problemTextRef}
+                value={problemText}
+                onChange={(e) => setProblemText(e.target.value)}
+                onFocus={() => setEditingField('problemText')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsEditing(false);
+                    setEditingField(null);
+                    setProblemText(problem.problemText || '');
+                  }
+                }}
+                onBlur={(e) => {
+                  const relatedTarget = e.relatedTarget as HTMLElement;
+                  if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
+                    handleFinishEdit();
+                  }
+                }}
+                placeholder="Enter your word problem here..."
+                rows={4}
+                style={{
+                  width: '100%',
+                  border: editingField === 'problemText' ? '2px solid #3182ce' : '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  minHeight: '80px',
+                  boxSizing: 'border-box',
+                  outline: 'none'
+                }}
+              />
+              <div style={{
+                fontSize: '11px',
+                color: '#718096',
+                marginTop: '4px',
+                textAlign: 'right'
+              }}>
+                {problemText.length}/500 characters
               </div>
             </div>
           ) : (
@@ -607,7 +695,9 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
           }}>
             {problem.type === 'multiple-choice' 
               ? 'Click fields to edit • Esc: Cancel'
-              : 'Enter/Tab: Next field • Type +, -, *, / for operators • Esc: Cancel'
+              : problem.type === 'word-problem'
+                ? 'Type your word problem • Esc: Cancel'
+                : 'Enter/Tab: Next field • Type +, -, *, / for operators • Esc: Cancel'
             }
           </div>
 

@@ -1,6 +1,6 @@
 export interface MathProblem {
   id: string;
-  type: 'basic-equation' | 'multiple-choice';
+  type: 'basic-equation' | 'multiple-choice' | 'word-problem';
   
   // Basic equation fields
   leftOperand?: string;
@@ -10,6 +10,9 @@ export interface MathProblem {
   // Multiple choice fields
   question?: string;
   options?: string[];
+  
+  // Word problem fields
+  problemText?: string;
   
   isEditing?: boolean;
 }
@@ -24,6 +27,11 @@ export const formatMathProblem = (problem: MathProblem): string => {
       .map((option, index) => `${String.fromCharCode(65 + index)}) ${option}`)
       .join('\n');
     return `${problem.question}\n${optionsText}`;
+  } else if (problem.type === 'word-problem') {
+    if (!problem.problemText || problem.problemText.trim() === '') {
+      return 'Word problem...';
+    }
+    return problem.problemText + '\n____________________';
   } else {
     // Basic equation
     if (!problem.leftOperand || !problem.operator || !problem.rightOperand) {

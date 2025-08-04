@@ -20,6 +20,7 @@ export interface GenerationResponse {
   breakdown: {
     basicEquations: number;
     multipleChoice: number;
+    wordProblems: number;
   };
 }
 
@@ -36,9 +37,13 @@ SUPPORTED PROBLEM TYPES:
    - Fields: question (string), options (array of strings)
    - Always provide 4 options (A, B, C, D)
 
+3. "word-problem": Text-based math problems with context
+   - Fields: problemText (string)
+   - Include a complete word problem with context and question
+
 ANALYSIS REQUIREMENTS:
 1. Extract the number of problems requested
-2. Determine the split between basic-equation and multiple-choice (default to basic-equation if not specified)
+2. Determine the split between basic-equation, multiple-choice, and word-problem (default to basic-equation if not specified)
 3. Follow any specific rules mentioned (e.g., "sum equals 20", "numbers 1-10", etc.)
 
 RESPONSE FORMAT:
@@ -48,17 +53,19 @@ Return a JSON object with this exact structure:
     "totalProblems": number,
     "basicEquations": number,
     "multipleChoice": number,
+    "wordProblems": number,
     "rules": "description of rules followed"
   },
   "problems": [
     {
       "id": "unique-id",
-      "type": "basic-equation" | "multiple-choice",
+      "type": "basic-equation" | "multiple-choice" | "word-problem",
       "leftOperand": "string", // for basic-equation only
       "operator": "string", // for basic-equation only  
       "rightOperand": "string", // for basic-equation only
       "question": "string", // for multiple-choice only
-      "options": ["A option", "B option", "C option", "D option"] // for multiple-choice only
+      "options": ["A option", "B option", "C option", "D option"], // for multiple-choice only
+      "problemText": "string" // for word-problem only
     }
   ]
 }
@@ -116,6 +123,7 @@ export class AIService {
         breakdown: {
           basicEquations: validatedProblems.filter(p => p.type === 'basic-equation').length,
           multipleChoice: validatedProblems.filter(p => p.type === 'multiple-choice').length,
+          wordProblems: validatedProblems.filter(p => p.type === 'word-problem').length,
         }
       };
       
@@ -132,7 +140,8 @@ export class AIService {
           // Ensure required fields
           const cleanProblem: MathProblem = {
             id: problem.id || `ai-generated-${Date.now()}-${index}`,
-            type: problem.type === 'multiple-choice' ? 'multiple-choice' : 'basic-equation',
+            type: problem.type === 'multiple-choice' ? 'multiple-choice' : 
+                  problem.type === 'word-problem' ? 'word-problem' : 'basic-equation',
           };
 
           if (cleanProblem.type === 'basic-equation') {
@@ -142,6 +151,11 @@ export class AIService {
             cleanProblem.leftOperand = String(problem.leftOperand);
             cleanProblem.operator = String(problem.operator);
             cleanProblem.rightOperand = String(problem.rightOperand);
+          } else if (cleanProblem.type === 'word-problem') {
+            if (!problem.problemText) {
+              throw new Error('Missing required field for word problem');
+            }
+            cleanProblem.problemText = String(problem.problemText);
           } else {
             if (!problem.question || !problem.options || !Array.isArray(problem.options)) {
               throw new Error('Missing required fields for multiple choice');

@@ -87,6 +87,30 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
           currentY += SPACING.multipleChoiceOptionHeight;
         });
         
+      } else if (problem.type === 'word-problem') {
+        // Word problem
+        pdf.setFont('helvetica', 'normal');
+        const problemText = problem.problemText || '';
+        
+        // Handle text wrapping if needed (basic implementation)
+        const maxWidth = pageWidth - margin * 2 - 0.3; // Account for indentation
+        const lines = pdf.splitTextToSize(problemText, maxWidth);
+        
+        // Render each line
+        lines.forEach((line: string, lineIndex: number) => {
+          pdf.text(line, margin + 0.3, currentY + (lineIndex * 0.2));
+        });
+        
+        // Move to position for answer line
+        currentY += lines.length * 0.2 + 0.2; // Line spacing + extra space
+        
+        // Answer line (2 inches wide)
+        const lineStartX = margin + 0.3;
+        const lineEndX = lineStartX + 2;
+        pdf.setLineWidth(0.005);
+        pdf.line(lineStartX, currentY + 0.02, lineEndX, currentY + 0.02);
+        currentY += SPACING.basicEquationHeight; // Use same spacing as basic equations
+        
       } else {
         // Basic equation
         const equation = `${problem.leftOperand} ${problem.operator} ${problem.rightOperand} = `;

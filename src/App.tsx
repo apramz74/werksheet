@@ -34,7 +34,7 @@ function App() {
   // AI generation modal state
   const [showAiModal, setShowAiModal] = useState(false);
 
-  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
+  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' | 'word-problem' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
 
   const handleNavigationChange = (currentPage: number, totalPages: number, handlers: { handlePrevPage: () => void, handleNextPage: () => void }) => {
     setNavigationState({ currentPage, totalPages, handlers });
@@ -56,7 +56,7 @@ function App() {
     setProblems(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' = 'basic-equation') => {
+  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' | 'word-problem' = 'basic-equation') => {
     setProblems(prev => {
       const newProblems = [...prev];
       const newProblem = createNewProblem(type);
@@ -71,8 +71,8 @@ function App() {
   };
 
   const handleCreateProblem = (problemType: string) => {
-    if (problemType === 'basic-equation' || problemType === 'multiple-choice') {
-      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice');
+    if (problemType === 'basic-equation' || problemType === 'multiple-choice' || problemType === 'word-problem') {
+      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice' | 'word-problem');
     }
     setShowCreateModal(false);
     setPendingAfterIndex(-1);

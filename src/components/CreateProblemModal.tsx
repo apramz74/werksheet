@@ -51,7 +51,7 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
       title: 'Word Problem',
       description: 'Math problems with text context',
       example: 'Sarah has 5 apples...',
-      available: false
+      available: true
     },
     {
       id: 'multiple-choice',

@@ -25,6 +25,9 @@ export const SPACING = {
   basicEquationHeight: 0.3,
   multipleChoiceQuestionHeight: 0.25,
   multipleChoiceOptionHeight: 0.2,
+  wordProblemBaseHeight: 0.4, // Base height for word problem text
+  wordProblemLineHeight: 0.2, // Height per line of text
+  wordProblemAnswerLineHeight: 0.3, // Height for answer line section
   footerHeight: 0.3,
   footnoteHeight: 0.4, // Space reserved for footnote (font height + margin)
   pageBreakThreshold: 1.5, // When to start new page (distance from bottom)
@@ -63,11 +66,29 @@ export function calculateMultipleChoiceHeight(optionCount: number): number {
 }
 
 /**
+ * Calculate the height a word problem will take
+ */
+export function calculateWordProblemHeight(problemText: string): number {
+  // Estimate number of lines based on text length
+  // Rough estimate: ~80 characters per line for typical worksheet width
+  const estimatedLines = Math.max(1, Math.ceil((problemText || '').length / 80));
+  
+  return (
+    SPACING.wordProblemBaseHeight +
+    (estimatedLines - 1) * SPACING.wordProblemLineHeight + // Additional lines
+    SPACING.wordProblemAnswerLineHeight +
+    SPACING.problemSpacing
+  );
+}
+
+/**
  * Calculate the height a problem will take based on its type
  */
 export function calculateProblemHeight(problem: MathProblem): number {
   if (problem.type === 'multiple-choice') {
     return calculateMultipleChoiceHeight(problem.options?.length || 0);
+  } else if (problem.type === 'word-problem') {
+    return calculateWordProblemHeight(problem.problemText || '');
   } else {
     return calculateBasicEquationHeight();
   }

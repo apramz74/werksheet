@@ -30,6 +30,8 @@ export class MathFormatter {
         Boolean(problem.options && problem.options.length >= 2) &&
         Boolean(problem.options && problem.options.every(option => Boolean(option && option.trim())))
       );
+    } else if (problem.type === 'word-problem') {
+      return Boolean(problem.problemText && problem.problemText.trim());
     } else {
       // Basic equation validation
       return (
@@ -42,9 +44,11 @@ export class MathFormatter {
     }
   }
 
-  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' = 'basic-equation'): MathProblem {
+  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' | 'word-problem' = 'basic-equation'): MathProblem {
     if (type === 'multiple-choice') {
       return this.createBlankMultipleChoice();
+    } else if (type === 'word-problem') {
+      return this.createBlankWordProblem();
     } else {
       return {
         id: Math.random().toString(36).substr(2, 9),
@@ -67,12 +71,23 @@ export class MathFormatter {
     };
   }
 
+  public static createBlankWordProblem(): MathProblem {
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'word-problem',
+      problemText: 'Sarah has 5 apples. She gives 2 apples to her friend. How many apples does Sarah have left?',
+      isEditing: true
+    };
+  }
+
   public static formatForDisplay(problem: MathProblem): string {
     if (problem.type === 'multiple-choice') {
       const optionsText = problem.options?.map((option, index) => 
         `${String.fromCharCode(65 + index)}) ${option}`
       ).join('\n') || '';
       return `${problem.question || ''}\n${optionsText}`;
+    } else if (problem.type === 'word-problem') {
+      return `${problem.problemText || ''}\n____________________`;
     } else {
       return `${problem.leftOperand || ''} ${problem.operator || ''} ${problem.rightOperand || ''} = ____`;
     }

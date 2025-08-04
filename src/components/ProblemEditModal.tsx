@@ -22,6 +22,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
   const [rightOperand, setRightOperand] = useState(problem.rightOperand || '');
   const [question, setQuestion] = useState(problem.question || '');
   const [options, setOptions] = useState(problem.options || ['', '']);
+  const [problemText, setProblemText] = useState(problem.problemText || '');
   const [selectedType, setSelectedType] = useState<string>(problem.type || 'basic-equation');
   const leftInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -39,7 +40,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
       title: 'Word Problem',
       description: 'Math problems with text context',
       example: 'Sarah has 5 apples...',
-      available: false
+      available: true
     },
     {
       id: 'multiple-choice',
@@ -64,6 +65,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
       setRightOperand(problem.rightOperand || '');
       setQuestion(problem.question || '');
       setOptions(problem.options || ['', '']);
+      setProblemText(problem.problemText || '');
       setSelectedType(problem.type || 'basic-equation');
       setTimeout(() => {
         if (leftInputRef.current && problem.type === 'basic-equation') {
@@ -107,10 +109,23 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
         type: 'multiple-choice',
         question,
         options,
-        // Clear basic equation fields when switching to multiple choice
+        // Clear other type fields when switching to multiple choice
         leftOperand: undefined,
         operator: undefined,
-        rightOperand: undefined
+        rightOperand: undefined,
+        problemText: undefined
+      };
+    } else if (selectedType === 'word-problem') {
+      updatedProblem = {
+        ...problem,
+        type: 'word-problem',
+        problemText,
+        // Clear other type fields when switching to word problem
+        leftOperand: undefined,
+        operator: undefined,
+        rightOperand: undefined,
+        question: undefined,
+        options: undefined
       };
     } else {
       updatedProblem = {
@@ -119,9 +134,10 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
         leftOperand,
         operator: MathFormatter.normalizeOperator(operator),
         rightOperand,
-        // Clear multiple choice fields when switching to basic equation
+        // Clear other type fields when switching to basic equation
         question: undefined,
-        options: undefined
+        options: undefined,
+        problemText: undefined
       };
     }
     
@@ -157,6 +173,10 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
     type: 'multiple-choice',
     question,
     options
+  } : selectedType === 'word-problem' ? {
+    ...problem,
+    type: 'word-problem',
+    problemText
   } : {
     ...problem,
     type: 'basic-equation',
@@ -590,8 +610,72 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
           </div>
         )}
 
+        {/* Word Problem Components - Only show for Word Problem */}
+        {selectedType === 'word-problem' && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#4a5568',
+              marginBottom: '12px'
+            }}>
+              Word Problem
+            </label>
+            
+            <div style={{
+              padding: '16px',
+              border: '2px solid #e2e8f0',
+              borderRadius: '8px',
+              backgroundColor: '#f8f9fa'
+            }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#4a5568',
+                marginBottom: '6px'
+              }}>
+                Problem Text:
+              </label>
+              <textarea
+                value={problemText}
+                onChange={(e) => setProblemText(e.target.value)}
+                placeholder="Enter your word problem here..."
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  minHeight: '80px',
+                  boxSizing: 'border-box',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3182ce';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#ddd';
+                }}
+              />
+              <div style={{
+                fontSize: '11px',
+                color: '#718096',
+                marginTop: '4px',
+                textAlign: 'right'
+              }}>
+                {problemText.length}/500 characters
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Coming Soon Message for other unavailable types */}
-        {selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && (
+        {selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && selectedType !== 'word-problem' && (
           <div style={{
             marginBottom: '20px',
             padding: '20px',
@@ -613,7 +697,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
               fontSize: '14px',
               color: '#718096'
             }}>
-              This problem type is not available yet. Please select "Basic Equation" or "Multiple Choice" to continue.
+              This problem type is not available yet. Please select "Basic Equation", "Multiple Choice", or "Word Problem" to continue.
             </p>
           </div>
         )}
@@ -672,24 +756,24 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              disabled={!isValid || (selectedType !== 'basic-equation' && selectedType !== 'multiple-choice')}
+              disabled={!isValid || (selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && selectedType !== 'word-problem')}
               style={{
                 padding: '8px 16px',
-                backgroundColor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice')) ? '#3182ce' : '#a0aec0',
+                backgroundColor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) ? '#3182ce' : '#a0aec0',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                cursor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice')) ? 'pointer' : 'not-allowed',
+                cursor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) ? 'pointer' : 'not-allowed',
                 fontSize: '14px',
                 fontWeight: '500'
               }}
               onMouseEnter={(e) => {
-                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice')) {
+                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) {
                   e.currentTarget.style.backgroundColor = '#2c5aa0';
                 }
               }}
               onMouseLeave={(e) => {
-                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice')) {
+                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) {
                   e.currentTarget.style.backgroundColor = '#3182ce';
                 }
               }}
