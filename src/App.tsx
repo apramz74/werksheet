@@ -4,7 +4,6 @@ import { WorksheetSettings, MathProblem } from './types';
 import WorksheetPreview from './components/WorksheetPreview';
 import ProblemList from './components/ProblemList';
 import CreateProblemModal from './components/CreateProblemModal';
-import AiBanner from './components/AiBanner';
 import AiGenerationModal from './components/AiGenerationModal';
 import { generateProgrammaticPDF } from './utils/pdfExport';
 import { MathFormatter } from './utils/mathFormatter';
@@ -294,11 +293,6 @@ function App() {
                   </button>
                 )}
               </div>
-              
-              {/* AI Banner - show when few or no problems */}
-              {problems.length < 5 && (
-                <AiBanner onStartGeneration={handleStartAiGeneration} />
-              )}
               
               <ProblemList
                 problems={problems}
