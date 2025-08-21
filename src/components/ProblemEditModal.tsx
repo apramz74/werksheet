@@ -20,6 +20,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
   const [leftOperand, setLeftOperand] = useState(problem.leftOperand || '');
   const [operator, setOperator] = useState(problem.operator || '+');
   const [rightOperand, setRightOperand] = useState(problem.rightOperand || '');
+  const [result, setResult] = useState(problem.result || '');
   const [question, setQuestion] = useState(problem.question || '');
   const [options, setOptions] = useState(problem.options || ['', '']);
   const [problemText, setProblemText] = useState(problem.problemText || '');
@@ -54,7 +55,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
       title: 'Fill in Blanks',
       description: 'Complete the equation',
       example: '__ + 3 = 8',
-      available: false
+      available: true
     }
   ];
 
@@ -63,6 +64,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
       setLeftOperand(problem.leftOperand || '');
       setOperator(problem.operator || '+');
       setRightOperand(problem.rightOperand || '');
+      setResult(problem.result || '');
       setQuestion(problem.question || '');
       setOptions(problem.options || ['', '']);
       setProblemText(problem.problemText || '');
@@ -113,6 +115,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
         leftOperand: undefined,
         operator: undefined,
         rightOperand: undefined,
+        result: undefined,
         problemText: undefined
       };
     } else if (selectedType === 'word-problem') {
@@ -124,8 +127,22 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
         leftOperand: undefined,
         operator: undefined,
         rightOperand: undefined,
+        result: undefined,
         question: undefined,
         options: undefined
+      };
+    } else if (selectedType === 'fill-blanks') {
+      updatedProblem = {
+        ...problem,
+        type: 'fill-blanks',
+        operator: MathFormatter.normalizeOperator(operator),
+        rightOperand,
+        result,
+        // Clear other type fields when switching to fill-blanks
+        leftOperand: undefined,
+        question: undefined,
+        options: undefined,
+        problemText: undefined
       };
     } else {
       updatedProblem = {
@@ -135,6 +152,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
         operator: MathFormatter.normalizeOperator(operator),
         rightOperand,
         // Clear other type fields when switching to basic equation
+        result: undefined,
         question: undefined,
         options: undefined,
         problemText: undefined
@@ -177,6 +195,12 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
     ...problem,
     type: 'word-problem',
     problemText
+  } : selectedType === 'fill-blanks' ? {
+    ...problem,
+    type: 'fill-blanks',
+    operator,
+    rightOperand,
+    result
   } : {
     ...problem,
     type: 'basic-equation',
@@ -674,8 +698,133 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
           </div>
         )}
 
+        {/* Fill-Blanks Components - Only show for Fill-Blanks */}
+        {selectedType === 'fill-blanks' && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#4a5568',
+              marginBottom: '12px'
+            }}>
+              Fill in the Blank
+            </label>
+          
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '16px',
+            border: '2px solid #e2e8f0',
+            borderRadius: '8px',
+            backgroundColor: '#f8f9fa'
+          }}>
+            {/* Blank placeholder */}
+            <div style={{
+              minWidth: '80px',
+              height: '40px',
+              border: '2px dashed #cbd5e0',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'white',
+              fontSize: '18px',
+              fontFamily: 'monospace',
+              color: '#9ca3af'
+            }}>
+              ____
+            </div>
+
+            {/* Operator */}
+            <select
+              value={operator}
+              onChange={(e) => handleOperatorChange(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '18px',
+                fontFamily: 'monospace',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                minWidth: '60px',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3182ce';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#ddd';
+              }}
+            >
+              <option value="+">+</option>
+              <option value="-">-</option>
+              <option value="*">*</option>
+              <option value="/">/</option>
+            </select>
+
+            {/* Right operand */}
+            <input
+              type="text"
+              value={rightOperand}
+              onChange={(e) => setRightOperand(e.target.value)}
+              style={{
+                width: '80px',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '18px',
+                fontFamily: 'monospace',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3182ce';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#ddd';
+              }}
+            />
+
+            {/* Equals sign */}
+            <span style={{ 
+              fontSize: '18px', 
+              fontFamily: 'monospace',
+              color: '#666'
+            }}>
+              =
+            </span>
+
+            {/* Result */}
+            <input
+              type="text"
+              value={result}
+              onChange={(e) => setResult(e.target.value)}
+              style={{
+                width: '80px',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '18px',
+                fontFamily: 'monospace',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3182ce';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#ddd';
+              }}
+            />
+          </div>
+          </div>
+        )}
+
         {/* Coming Soon Message for other unavailable types */}
-        {selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && selectedType !== 'word-problem' && (
+        {selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && selectedType !== 'word-problem' && selectedType !== 'fill-blanks' && (
           <div style={{
             marginBottom: '20px',
             padding: '20px',
@@ -697,7 +846,7 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
               fontSize: '14px',
               color: '#718096'
             }}>
-              This problem type is not available yet. Please select "Basic Equation", "Multiple Choice", or "Word Problem" to continue.
+              This problem type is not available yet. Please select "Basic Equation", "Multiple Choice", "Word Problem", or "Fill in Blanks" to continue.
             </p>
           </div>
         )}
@@ -756,24 +905,24 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              disabled={!isValid || (selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && selectedType !== 'word-problem')}
+              disabled={!isValid || (selectedType !== 'basic-equation' && selectedType !== 'multiple-choice' && selectedType !== 'word-problem' && selectedType !== 'fill-blanks')}
               style={{
                 padding: '8px 16px',
-                backgroundColor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) ? '#3182ce' : '#a0aec0',
+                backgroundColor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem' || selectedType === 'fill-blanks')) ? '#3182ce' : '#a0aec0',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                cursor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) ? 'pointer' : 'not-allowed',
+                cursor: (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem' || selectedType === 'fill-blanks')) ? 'pointer' : 'not-allowed',
                 fontSize: '14px',
                 fontWeight: '500'
               }}
               onMouseEnter={(e) => {
-                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) {
+                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem' || selectedType === 'fill-blanks')) {
                   e.currentTarget.style.backgroundColor = '#2c5aa0';
                 }
               }}
               onMouseLeave={(e) => {
-                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem')) {
+                if (isValid && (selectedType === 'basic-equation' || selectedType === 'multiple-choice' || selectedType === 'word-problem' || selectedType === 'fill-blanks')) {
                   e.currentTarget.style.backgroundColor = '#3182ce';
                 }
               }}

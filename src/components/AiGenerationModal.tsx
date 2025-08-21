@@ -65,7 +65,8 @@ const AiGenerationModal: React.FC<AiGenerationModalProps> = ({
     "15 subtraction problems using numbers 1-20",
     "5 basic division problems and 5 word problems about fractions",
     "10 word problems about money and shopping",
-    "8 word problems involving animals and counting"
+    "8 word problems involving animals and counting",
+    "12 fill-in-the-blank problems with addition and subtraction"
   ];
 
   if (!isOpen) return null;
@@ -333,8 +334,11 @@ const AiGenerationModal: React.FC<AiGenerationModalProps> = ({
                 <p style={{ margin: '0 0 4px 0' }}>
                   • {generationResult.breakdown.multipleChoice} multiple choice questions
                 </p>
-                <p style={{ margin: '0' }}>
+                <p style={{ margin: '0 0 4px 0' }}>
                   • {generationResult.breakdown.wordProblems} word problems
+                </p>
+                <p style={{ margin: '0' }}>
+                  • {generationResult.breakdown.fillBlanks} fill-in-the-blank problems
                 </p>
               </div>
             </div>
@@ -372,7 +376,9 @@ const AiGenerationModal: React.FC<AiGenerationModalProps> = ({
                     ? `${problem.leftOperand} ${problem.operator} ${problem.rightOperand} = ____`
                     : problem.type === 'word-problem'
                       ? `${problem.problemText?.substring(0, 60)}${(problem.problemText?.length || 0) > 60 ? '...' : ''} (Word problem)`
-                      : `${problem.question} (Multiple choice)`
+                      : problem.type === 'fill-blanks'
+                        ? `____ ${problem.operator} ${problem.rightOperand} = ${problem.result} (Fill-in-the-blank)`
+                        : `${problem.question} (Multiple choice)`
                   }
                 </div>
               ))}

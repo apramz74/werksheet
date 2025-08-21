@@ -5,6 +5,7 @@ import WorksheetPreview from './components/WorksheetPreview';
 import ProblemList from './components/ProblemList';
 import CreateProblemModal from './components/CreateProblemModal';
 import AiGenerationModal from './components/AiGenerationModal';
+import AdvancedSettingsModal from './components/AdvancedSettingsModal';
 import { generateProgrammaticPDF } from './utils/pdfExport';
 import { MathFormatter } from './utils/mathFormatter';
 
@@ -13,7 +14,8 @@ function App() {
     title: 'Math Worksheet',
     numberOfProblems: 5,
     showAnswers: false,
-    footnote: ''
+    footnote: '',
+    layout: 'single-column'
   });
 
   const [problems, setProblems] = useState<MathProblem[]>([]);
@@ -28,13 +30,17 @@ function App() {
     handlers: { handlePrevPage: () => void, handleNextPage: () => void };
   } | null>(null);
 
-  // Worksheet details section state
-  const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
-
   // AI generation modal state
   const [showAiModal, setShowAiModal] = useState(false);
+  
+  // Advanced settings modal state
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  
+  // Title editing state
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState(settings.title);
 
-  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' | 'word-problem' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
+  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
 
   const handleNavigationChange = (currentPage: number, totalPages: number, handlers: { handlePrevPage: () => void, handleNextPage: () => void }) => {
     setNavigationState({ currentPage, totalPages, handlers });
@@ -56,7 +62,7 @@ function App() {
     setProblems(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' | 'word-problem' = 'basic-equation') => {
+  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' = 'basic-equation') => {
     setProblems(prev => {
       const newProblems = [...prev];
       const newProblem = createNewProblem(type);
@@ -71,8 +77,8 @@ function App() {
   };
 
   const handleCreateProblem = (problemType: string) => {
-    if (problemType === 'basic-equation' || problemType === 'multiple-choice' || problemType === 'word-problem') {
-      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice' | 'word-problem');
+    if (problemType === 'basic-equation' || problemType === 'multiple-choice' || problemType === 'word-problem' || problemType === 'fill-blanks') {
+      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks');
     }
     setShowCreateModal(false);
     setPendingAfterIndex(-1);
@@ -108,6 +114,10 @@ function App() {
     setProblems(prev => [...prev, ...generatedProblems]);
   };
 
+  const handleAdvancedSettingsSave = (newSettings: WorksheetSettings) => {
+    setSettings(newSettings);
+  };
+
   const validProblems = problems.filter(p => MathFormatter.validateProblem(p));
 
   return (
@@ -125,12 +135,123 @@ function App() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <h1 style={{ color: '#333', fontSize: '24px', margin: '0' }}>
-              Create worksheet
-            </h1>
+            {!isEditingTitle ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h1 
+                  style={{ 
+                    color: '#333', 
+                    fontSize: '24px', 
+                    margin: '0', 
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onClick={() => {
+                    setIsEditingTitle(true);
+                    setTitleValue(settings.title);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  {settings.title}
+                </h1>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#9ca3af"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ 
+                    cursor: 'pointer',
+                    transition: 'stroke 0.2s ease',
+                    flexShrink: 0
+                  }}
+                  onClick={() => {
+                    setIsEditingTitle(true);
+                    setTitleValue(settings.title);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.stroke = '#6b7280';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.stroke = '#9ca3af';
+                  }}
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={() => {
+                  setSettings({ ...settings, title: titleValue });
+                  setIsEditingTitle(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setSettings({ ...settings, title: titleValue });
+                    setIsEditingTitle(false);
+                  }
+                  if (e.key === 'Escape') {
+                    setTitleValue(settings.title);
+                    setIsEditingTitle(false);
+                  }
+                }}
+                autoFocus
+                style={{
+                  color: '#333',
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  border: '2px solid #007bff',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  backgroundColor: 'white',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  minWidth: '200px'
+                }}
+              />
+            )}
           </div>
           
-          <button
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#9ca3af"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ 
+                cursor: 'pointer',
+                transition: 'stroke 0.2s ease',
+                flexShrink: 0
+              }}
+              onClick={() => setShowAdvancedSettings(true)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.stroke = '#6b7280';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.stroke = '#9ca3af';
+              }}
+            >
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <button
             onClick={handleExportPDF}
             disabled={isExporting || validProblems.length === 0}
             style={{
@@ -148,6 +269,7 @@ function App() {
           >
             {isExporting ? 'Exporting...' : 'Export PDF'}
           </button>
+          </div>
         </header>
 
         {/* Main Workspace Container */}
@@ -167,99 +289,6 @@ function App() {
             overflow: 'hidden'
           }}>
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              {/* Worksheet Details Section */}
-              <div>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  margin: '0 0 20px 0',
-                  cursor: 'pointer',
-                  gap: '8px'
-                }}
-                onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
-                >
-                  <span style={{
-                    fontSize: '14px',
-                    color: '#666',
-                    transition: 'transform 0.2s ease',
-                    transform: isDetailsExpanded ? 'rotate(90deg)' : 'rotate(0deg)'
-                  }}>
-                    ▶
-                  </span>
-                  <h2 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    color: '#333',
-                    margin: '0'
-                  }}>
-                    Worksheet details
-                  </h2>
-                </div>
-                
-                {isDetailsExpanded && (
-                  <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    border: '1px solid #e2e8f0',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{ marginBottom: '12px' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        color: '#374151',
-                        marginBottom: '6px'
-                      }}>
-                        Worksheet title
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.title}
-                        onChange={(e) => setSettings({ ...settings, title: e.target.value })}
-                        placeholder="Enter worksheet title"
-                        style={{
-                          width: '100%',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '6px',
-                          padding: '8px 12px',
-                          fontSize: '14px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ marginBottom: '12px' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        color: '#374151',
-                        marginBottom: '6px'
-                      }}>
-                        Footnote
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.footnote}
-                        onChange={(e) => setSettings({ ...settings, footnote: e.target.value })}
-                        placeholder="Optional footnote text (appears at bottom of worksheet)"
-                        style={{
-                          width: '100%',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '6px',
-                          padding: '8px 12px',
-                          fontSize: '14px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Problems Section */}
               <div style={{ 
                 display: 'flex', 
@@ -423,6 +452,14 @@ function App() {
         isOpen={showAiModal}
         onClose={() => setShowAiModal(false)}
         onProblemsGenerated={handleAiProblemsGenerated}
+      />
+
+      {/* Advanced Settings Modal */}
+      <AdvancedSettingsModal
+        isOpen={showAdvancedSettings}
+        onClose={() => setShowAdvancedSettings(false)}
+        settings={settings}
+        onSave={handleAdvancedSettingsSave}
       />
     </div>
   );

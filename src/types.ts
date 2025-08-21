@@ -1,6 +1,6 @@
 export interface MathProblem {
   id: string;
-  type: 'basic-equation' | 'multiple-choice' | 'word-problem';
+  type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks';
   
   // Basic equation fields
   leftOperand?: string;
@@ -13,6 +13,9 @@ export interface MathProblem {
   
   // Word problem fields
   problemText?: string;
+  
+  // Fill-blanks fields (__ + rightOperand = result)
+  result?: string;
   
   isEditing?: boolean;
 }
@@ -32,6 +35,11 @@ export const formatMathProblem = (problem: MathProblem): string => {
       return 'Word problem...';
     }
     return problem.problemText + '\n____________________';
+  } else if (problem.type === 'fill-blanks') {
+    if (!problem.operator || !problem.rightOperand || !problem.result) {
+      return 'Fill in the blank...';
+    }
+    return `____ ${problem.operator} ${problem.rightOperand} = ${problem.result}`;
   } else {
     // Basic equation
     if (!problem.leftOperand || !problem.operator || !problem.rightOperand) {
@@ -41,11 +49,14 @@ export const formatMathProblem = (problem: MathProblem): string => {
   }
 };
 
+export type WorksheetLayout = 'single-column' | 'two-column' | 'compact-grid';
+
 export interface WorksheetSettings {
   title: string;
   numberOfProblems: number;
   showAnswers: boolean;
   footnote: string;
+  layout: WorksheetLayout;
 }
 
 export interface MathExpression {

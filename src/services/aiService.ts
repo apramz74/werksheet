@@ -21,6 +21,7 @@ export interface GenerationResponse {
     basicEquations: number;
     multipleChoice: number;
     wordProblems: number;
+    fillBlanks: number;
   };
 }
 
@@ -41,9 +42,13 @@ SUPPORTED PROBLEM TYPES:
    - Fields: problemText (string)
    - Include a complete word problem with context and question
 
+4. "fill-blanks": Fill in the blank equations like "__ + 3 = 8"
+   - Fields: operator (string), rightOperand (string), result (string)
+   - The blank is always the first operand (left side)
+
 ANALYSIS REQUIREMENTS:
 1. Extract the number of problems requested
-2. Determine the split between basic-equation, multiple-choice, and word-problem (default to basic-equation if not specified)
+2. Determine the split between basic-equation, multiple-choice, word-problem, and fill-blanks (default to basic-equation if not specified)
 3. Follow any specific rules mentioned (e.g., "sum equals 20", "numbers 1-10", etc.)
 
 RESPONSE FORMAT:
@@ -54,18 +59,20 @@ Return a JSON object with this exact structure:
     "basicEquations": number,
     "multipleChoice": number,
     "wordProblems": number,
+    "fillBlanks": number,
     "rules": "description of rules followed"
   },
   "problems": [
     {
       "id": "unique-id",
-      "type": "basic-equation" | "multiple-choice" | "word-problem",
+      "type": "basic-equation" | "multiple-choice" | "word-problem" | "fill-blanks",
       "leftOperand": "string", // for basic-equation only
       "operator": "string", // for basic-equation only  
       "rightOperand": "string", // for basic-equation only
       "question": "string", // for multiple-choice only
       "options": ["A option", "B option", "C option", "D option"], // for multiple-choice only
-      "problemText": "string" // for word-problem only
+      "problemText": "string", // for word-problem only
+      "result": "string" // for fill-blanks only (operator and rightOperand reused from basic-equation)
     }
   ]
 }
@@ -124,6 +131,7 @@ export class AIService {
           basicEquations: validatedProblems.filter(p => p.type === 'basic-equation').length,
           multipleChoice: validatedProblems.filter(p => p.type === 'multiple-choice').length,
           wordProblems: validatedProblems.filter(p => p.type === 'word-problem').length,
+          fillBlanks: validatedProblems.filter(p => p.type === 'fill-blanks').length,
         }
       };
       
@@ -141,7 +149,8 @@ export class AIService {
           const cleanProblem: MathProblem = {
             id: problem.id || `ai-generated-${Date.now()}-${index}`,
             type: problem.type === 'multiple-choice' ? 'multiple-choice' : 
-                  problem.type === 'word-problem' ? 'word-problem' : 'basic-equation',
+                  problem.type === 'word-problem' ? 'word-problem' :
+                  problem.type === 'fill-blanks' ? 'fill-blanks' : 'basic-equation',
           };
 
           if (cleanProblem.type === 'basic-equation') {
@@ -156,6 +165,13 @@ export class AIService {
               throw new Error('Missing required field for word problem');
             }
             cleanProblem.problemText = String(problem.problemText);
+          } else if (cleanProblem.type === 'fill-blanks') {
+            if (!problem.operator || !problem.rightOperand || !problem.result) {
+              throw new Error('Missing required fields for fill-blanks');
+            }
+            cleanProblem.operator = String(problem.operator);
+            cleanProblem.rightOperand = String(problem.rightOperand);
+            cleanProblem.result = String(problem.result);
           } else {
             if (!problem.question || !problem.options || !Array.isArray(problem.options)) {
               throw new Error('Missing required fields for multiple choice');

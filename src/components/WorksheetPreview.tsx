@@ -8,6 +8,92 @@ import {
   SPACING_PX,
 } from "../utils/layoutCalculations";
 
+// Helper function to determine if a problem is suitable for compact layouts
+const isCompactLayoutSuitable = (problem: MathProblem): boolean => {
+  return problem.type === 'basic-equation' || problem.type === 'fill-blanks';
+};
+
+// Helper function to determine if a problem is suitable for two-column layout
+const isTwoColumnSuitable = (problem: MathProblem): boolean => {
+  return problem.type === 'basic-equation' || 
+         problem.type === 'fill-blanks' || 
+         problem.type === 'multiple-choice';
+};
+
+// Render problem in compact format (like traditional worksheet)
+const renderCompactProblem = (problem: MathProblem, globalIndex: number) => {
+  if (problem.type === 'fill-blanks') {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+        fontFamily: "Helvetica, Arial, sans-serif",
+        padding: '8px 4px',
+        minHeight: '50px',
+        width: '100%'
+      }}>
+        <div style={{ marginBottom: '2px', fontWeight: 'normal', fontSize: `${FONT_SIZES.problemText * 0.8}px` }}>
+          {globalIndex + 1})
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+          lineHeight: '1.2',
+          width: '100%'
+        }}>
+          <div style={{ textAlign: 'center', width: '100%' }}>
+            <div style={{ borderBottom: '1px solid #000', minWidth: '30px', height: '14px', margin: '0 auto' }}></div>
+          </div>
+          <div style={{ width: '100%', margin: '2px 0', position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '5px' }}>{problem.operator}</span>
+            <span style={{ position: 'absolute', right: '5px' }}>{problem.rightOperand}</span>
+          </div>
+          <div style={{ borderBottom: '1px solid #000', width: '100%', height: '1px', margin: '2px 0' }}></div>
+        </div>
+      </div>
+    );
+  } else if (problem.type === 'basic-equation') {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+        fontFamily: "Helvetica, Arial, sans-serif",
+        padding: '8px 4px',
+        minHeight: '50px',
+        width: '100%'
+      }}>
+        <div style={{ marginBottom: '2px', fontWeight: 'normal', fontSize: `${FONT_SIZES.problemText * 0.8}px` }}>
+          {globalIndex + 1})
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+          lineHeight: '1.2',
+          width: '100%'
+        }}>
+          <div style={{ textAlign: 'right', width: '100%' }}>
+            {problem.leftOperand}
+          </div>
+          <div style={{ width: '100%', margin: '2px 0', position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '5px' }}>{problem.operator}</span>
+            <span style={{ position: 'absolute', right: '5px' }}>{problem.rightOperand}</span>
+          </div>
+          <div style={{ borderBottom: '1px solid #000', width: '100%', height: '1px', margin: '2px 0' }}></div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface WorksheetPreviewProps {
   problems: MathProblem[];
   settings: WorksheetSettings;
@@ -140,57 +226,308 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
 
           {/* Problems */}
           <div>
-            {currentPageProblems.map((problem, index) => {
-              const globalIndex =
-                pages
-                  .slice(0, currentPage)
-                  .reduce((sum, page) => sum + page.length, 0) + index;
+            {settings.layout === 'compact-grid' ? (
+              // Compact Grid Layout - 10 columns for simple problems (like traditional worksheets)
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(10, 1fr)',
+                gap: '48px',
+                marginBottom: '20px'
+              }}>
+                {currentPageProblems.map((problem, index) => {
+                  const globalIndex =
+                    pages
+                      .slice(0, currentPage)
+                      .reduce((sum, page) => sum + page.length, 0) + index;
 
-              return (
-                <div
-                  key={problem.id}
-                  style={{
-                    marginBottom: `${SPACING_PX.problemSpacing}px`,
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: `${0.3 * 96}px`, // Exact 0.3 inch gap like PDF
-                    marginLeft: "0",
-                    paddingLeft: "0",
-                  }}
-                >
-                  {/* Problem number */}
-                  <span
+                  if (isCompactLayoutSuitable(problem)) {
+                    return (
+                      <div key={problem.id}>
+                        {renderCompactProblem(problem, globalIndex)}
+                      </div>
+                    );
+                  } else {
+                    // Fall back to single column for complex problems
+                    return (
+                      <div key={problem.id} style={{ gridColumn: '1 / -1', marginBottom: '20px' }}>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: `${0.3 * 96}px`,
+                        }}>
+                          <span style={{
+                            fontSize: `${FONT_SIZES.problemNumber}px`,
+                            fontWeight: "bold",
+                            color: "#000",
+                            fontFamily: "Helvetica, Arial, sans-serif",
+                            flexShrink: 0,
+                          }}>
+                            {globalIndex + 1}.
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            {problem.type === "multiple-choice" ? (
+                              <div>
+                                <div style={{
+                                  fontSize: `${FONT_SIZES.problemText}px`,
+                                  fontWeight: "normal",
+                                  color: "#000",
+                                  marginBottom: `${SPACING_PX.multipleChoiceQuestionHeight}px`,
+                                  fontFamily: "Helvetica, Arial, sans-serif",
+                                }}>
+                                  {problem.question}
+                                </div>
+                                <div>
+                                  {problem.options?.map((option, optIndex) => (
+                                    <div key={optIndex} style={{
+                                      fontSize: `${FONT_SIZES.problemText}px`,
+                                      fontWeight: "normal",
+                                      color: "#000",
+                                      marginBottom: `${SPACING_PX.multipleChoiceOptionHeight}px`,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "8px",
+                                      fontFamily: "Helvetica, Arial, sans-serif",
+                                    }}>
+                                      <div style={{
+                                        width: `${0.08 * 96 * 2}px`,
+                                        height: `${0.08 * 96 * 2}px`,
+                                        border: "1px solid #000",
+                                        borderRadius: "50%",
+                                        backgroundColor: "white",
+                                        flexShrink: 0,
+                                      }}></div>
+                                      <span style={{ fontWeight: "normal" }}>
+                                        {String.fromCharCode(65 + optIndex)})
+                                      </span>
+                                      <span style={{ fontWeight: "normal" }}>
+                                        {option}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : problem.type === "word-problem" ? (
+                              <div>
+                                <div style={{
+                                  fontSize: `${FONT_SIZES.problemText}px`,
+                                  fontWeight: "normal",
+                                  color: "#000",
+                                  fontFamily: "Helvetica, Arial, sans-serif",
+                                  lineHeight: "1.4",
+                                  marginBottom: `${0.2 * 96}px`,
+                                }}>
+                                  {problem.problemText}
+                                </div>
+                                <div style={{
+                                  borderBottom: "1px solid #000",
+                                  width: `${2 * 96}px`,
+                                  height: "16px",
+                                }}></div>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            ) : settings.layout === 'two-column' ? (
+              // Two Column Layout
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '24px',
+                marginBottom: '20px'
+              }}>
+                {currentPageProblems.map((problem, index) => {
+                  const globalIndex =
+                    pages
+                      .slice(0, currentPage)
+                      .reduce((sum, page) => sum + page.length, 0) + index;
+
+                  if (isTwoColumnSuitable(problem)) {
+                    return (
+                      <div key={problem.id} style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "12px",
+                      }}>
+                        <span style={{
+                          fontSize: `${FONT_SIZES.problemNumber}px`,
+                          fontWeight: "bold",
+                          color: "#000",
+                          fontFamily: "Helvetica, Arial, sans-serif",
+                          flexShrink: 0,
+                        }}>
+                          {globalIndex + 1}.
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          {problem.type === "multiple-choice" ? (
+                            <div>
+                              <div style={{
+                                fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+                                fontWeight: "normal",
+                                color: "#000",
+                                marginBottom: "8px",
+                                fontFamily: "Helvetica, Arial, sans-serif",
+                              }}>
+                                {problem.question}
+                              </div>
+                              <div>
+                                {problem.options?.map((option, optIndex) => (
+                                  <div key={optIndex} style={{
+                                    fontSize: `${FONT_SIZES.problemText * 0.85}px`,
+                                    fontWeight: "normal",
+                                    color: "#000",
+                                    marginBottom: "4px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    fontFamily: "Helvetica, Arial, sans-serif",
+                                  }}>
+                                    <div style={{
+                                      width: "12px",
+                                      height: "12px",
+                                      border: "1px solid #000",
+                                      borderRadius: "50%",
+                                      backgroundColor: "white",
+                                      flexShrink: 0,
+                                    }}></div>
+                                    <span>{String.fromCharCode(65 + optIndex)}) {option}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : problem.type === "fill-blanks" ? (
+                            <div style={{
+                              fontSize: `${FONT_SIZES.problemText}px`,
+                              fontWeight: "normal",
+                              color: "#000",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontFamily: "Helvetica, Arial, sans-serif",
+                            }}>
+                              <div style={{
+                                borderBottom: "1px solid #000",
+                                minWidth: "40px",
+                                height: "16px",
+                              }}></div>
+                              <span>{problem.operator}</span>
+                              <span>{problem.rightOperand}</span>
+                              <span>=</span>
+                              <span>{problem.result}</span>
+                            </div>
+                          ) : (
+                            <div style={{
+                              fontSize: `${FONT_SIZES.problemText}px`,
+                              fontWeight: "normal",
+                              color: "#000",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontFamily: "Helvetica, Arial, sans-serif",
+                            }}>
+                              <span>{problem.leftOperand}</span>
+                              <span>{problem.operator}</span>
+                              <span>{problem.rightOperand}</span>
+                              <span>=</span>
+                              <div style={{
+                                borderBottom: "1px solid #000",
+                                minWidth: "40px",
+                                height: "16px",
+                              }}></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // Fall back to single column for complex problems (word problems)
+                    return (
+                      <div key={problem.id} style={{ gridColumn: '1 / -1', marginBottom: '20px' }}>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: `${0.3 * 96}px`,
+                        }}>
+                          <span style={{
+                            fontSize: `${FONT_SIZES.problemNumber}px`,
+                            fontWeight: "bold",
+                            color: "#000",
+                            fontFamily: "Helvetica, Arial, sans-serif",
+                            flexShrink: 0,
+                          }}>
+                            {globalIndex + 1}.
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{
+                              fontSize: `${FONT_SIZES.problemText}px`,
+                              fontWeight: "normal",
+                              color: "#000",
+                              fontFamily: "Helvetica, Arial, sans-serif",
+                              lineHeight: "1.4",
+                              marginBottom: `${0.2 * 96}px`,
+                            }}>
+                              {problem.problemText}
+                            </div>
+                            <div style={{
+                              borderBottom: "1px solid #000",
+                              width: `${2 * 96}px`,
+                              height: "16px",
+                            }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            ) : (
+              // Single Column Layout (default)
+              currentPageProblems.map((problem, index) => {
+                const globalIndex =
+                  pages
+                    .slice(0, currentPage)
+                    .reduce((sum, page) => sum + page.length, 0) + index;
+
+                return (
+                  <div
+                    key={problem.id}
                     style={{
+                      marginBottom: `${SPACING_PX.problemSpacing}px`,
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: `${0.3 * 96}px`,
+                      marginLeft: "0",
+                      paddingLeft: "0",
+                    }}
+                  >
+                    <span style={{
                       fontSize: `${FONT_SIZES.problemNumber}px`,
                       fontWeight: "bold",
                       color: "#000",
                       fontFamily: "Helvetica, Arial, sans-serif",
                       flexShrink: 0,
-                    }}
-                  >
-                    {globalIndex + 1}.
-                  </span>
-
-                  {/* Problem content */}
-                  <div style={{ flex: 1 }}>
-                    {problem.type === "multiple-choice" ? (
-                      <div>
-                        <div
-                          style={{
+                    }}>
+                      {globalIndex + 1}.
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      {problem.type === "multiple-choice" ? (
+                        <div>
+                          <div style={{
                             fontSize: `${FONT_SIZES.problemText}px`,
                             fontWeight: "normal",
                             color: "#000",
                             marginBottom: `${SPACING_PX.multipleChoiceQuestionHeight}px`,
                             fontFamily: "Helvetica, Arial, sans-serif",
-                          }}
-                        >
-                          {problem.question}
-                        </div>
-                        <div>
-                          {problem.options?.map((option, optIndex) => (
-                            <div
-                              key={optIndex}
-                              style={{
+                          }}>
+                            {problem.question}
+                          </div>
+                          <div>
+                            {problem.options?.map((option, optIndex) => (
+                              <div key={optIndex} style={{
                                 fontSize: `${FONT_SIZES.problemText}px`,
                                 fontWeight: "normal",
                                 color: "#000",
@@ -199,54 +536,45 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                                 alignItems: "center",
                                 gap: "8px",
                                 fontFamily: "Helvetica, Arial, sans-serif",
-                              }}
-                            >
-                              {/* Answer circle */}
-                              <div
-                                style={{
+                              }}>
+                                <div style={{
                                   width: `${0.08 * 96 * 2}px`,
                                   height: `${0.08 * 96 * 2}px`,
                                   border: "1px solid #000",
                                   borderRadius: "50%",
                                   backgroundColor: "white",
                                   flexShrink: 0,
-                                }}
-                              ></div>
-                              <span style={{ fontWeight: "normal" }}>
-                                {String.fromCharCode(65 + optIndex)})
-                              </span>
-                              <span style={{ fontWeight: "normal" }}>
-                                {option}
-                              </span>
-                            </div>
-                          ))}
+                                }}></div>
+                                <span style={{ fontWeight: "normal" }}>
+                                  {String.fromCharCode(65 + optIndex)})
+                                </span>
+                                <span style={{ fontWeight: "normal" }}>
+                                  {option}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ) : problem.type === "word-problem" ? (
-                      <div>
-                        <div
-                          style={{
+                      ) : problem.type === "word-problem" ? (
+                        <div>
+                          <div style={{
                             fontSize: `${FONT_SIZES.problemText}px`,
                             fontWeight: "normal",
                             color: "#000",
                             fontFamily: "Helvetica, Arial, sans-serif",
                             lineHeight: "1.4",
-                            marginBottom: `${0.2 * 96}px`, // 0.2 inches spacing
-                          }}
-                        >
-                          {problem.problemText}
-                        </div>
-                        <div
-                          style={{
+                            marginBottom: `${0.2 * 96}px`,
+                          }}>
+                            {problem.problemText}
+                          </div>
+                          <div style={{
                             borderBottom: "1px solid #000",
-                            width: `${2 * 96}px`, // 2 inches wide
+                            width: `${2 * 96}px`,
                             height: "16px",
-                          }}
-                        ></div>
-                      </div>
-                    ) : (
-                      <div
-                        style={{
+                          }}></div>
+                        </div>
+                      ) : problem.type === "fill-blanks" ? (
+                        <div style={{
                           fontSize: `${FONT_SIZES.problemText}px`,
                           fontWeight: "normal",
                           color: "#000",
@@ -254,25 +582,43 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                           alignItems: "center",
                           gap: "4px",
                           fontFamily: "Helvetica, Arial, sans-serif",
-                        }}
-                      >
-                        <span>{problem.leftOperand}</span>
-                        <span>{problem.operator}</span>
-                        <span>{problem.rightOperand}</span>
-                        <span>=</span>
-                        <div
-                          style={{
+                        }}>
+                          <div style={{
                             borderBottom: "1px solid #000",
                             minWidth: `${1 * 96}px`,
                             height: "16px",
-                          }}
-                        ></div>
-                      </div>
-                    )}
+                          }}></div>
+                          <span>{problem.operator}</span>
+                          <span>{problem.rightOperand}</span>
+                          <span>=</span>
+                          <span>{problem.result}</span>
+                        </div>
+                      ) : (
+                        <div style={{
+                          fontSize: `${FONT_SIZES.problemText}px`,
+                          fontWeight: "normal",
+                          color: "#000",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          fontFamily: "Helvetica, Arial, sans-serif",
+                        }}>
+                          <span>{problem.leftOperand}</span>
+                          <span>{problem.operator}</span>
+                          <span>{problem.rightOperand}</span>
+                          <span>=</span>
+                          <div style={{
+                            borderBottom: "1px solid #000",
+                            minWidth: `${1 * 96}px`,
+                            height: "16px",
+                          }}></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
 
           {/* Footnote */}

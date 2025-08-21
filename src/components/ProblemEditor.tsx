@@ -19,7 +19,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   onAddAfter 
 }) => {
   const [isEditing, setIsEditing] = useState(problem.isEditing || false);
-  const [editingField, setEditingField] = useState<'left' | 'operator' | 'right' | 'question' | 'problemText' | number | null>(null);
+  const [editingField, setEditingField] = useState<'left' | 'operator' | 'right' | 'result' | 'question' | 'problemText' | number | null>(null);
   
   // Basic equation state
   const [leftOperand, setLeftOperand] = useState(problem.leftOperand || '');
@@ -33,10 +33,14 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   // Word problem state
   const [problemText, setProblemText] = useState(problem.problemText || '');
   
+  // Fill-blanks state (reuses operator and rightOperand, adds result)
+  const [result, setResult] = useState(problem.result || '');
+  
   const [showEditModal, setShowEditModal] = useState(false);
   const leftInputRef = useRef<HTMLInputElement>(null);
   const rightInputRef = useRef<HTMLInputElement>(null);
   const operatorSelectRef = useRef<HTMLSelectElement>(null);
+  const resultInputRef = useRef<HTMLInputElement>(null);
   const questionInputRef = useRef<HTMLInputElement>(null);
   const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const problemTextRef = useRef<HTMLTextAreaElement>(null);
@@ -49,6 +53,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
         setEditingField('question');
       } else if (problem.type === 'word-problem') {
         setEditingField('problemText');
+      } else if (problem.type === 'fill-blanks') {
+        setEditingField('operator');
       } else {
         setEditingField('left');
       }
@@ -63,6 +69,9 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       } else if (editingField === 'right' && rightInputRef.current) {
         rightInputRef.current.focus();
         rightInputRef.current.select();
+      } else if (editingField === 'result' && resultInputRef.current) {
+        resultInputRef.current.focus();
+        resultInputRef.current.select();
       } else if (editingField === 'question' && questionInputRef.current) {
         questionInputRef.current.focus();
         questionInputRef.current.select();
@@ -85,6 +94,11 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
     } else if (problem.type === 'word-problem') {
       setEditingField('problemText');
       setProblemText(problem.problemText || '');
+    } else if (problem.type === 'fill-blanks') {
+      setEditingField('operator');
+      setOperator(problem.operator || '+');
+      setRightOperand(problem.rightOperand || '');
+      setResult(problem.result || '');
     } else {
       setEditingField('left');
       setLeftOperand(problem.leftOperand || '');
@@ -107,6 +121,14 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       updatedProblem = {
         ...problem,
         problemText,
+        isEditing: false
+      };
+    } else if (problem.type === 'fill-blanks') {
+      updatedProblem = {
+        ...problem,
+        operator: MathFormatter.normalizeOperator(operator),
+        rightOperand,
+        result,
         isEditing: false
       };
     } else {
@@ -148,6 +170,33 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       setLeftOperand(problem.leftOperand || '');
       setOperator(problem.operator || '+');
       setRightOperand(problem.rightOperand || '');
+    }
+  };
+
+  const handleFillBlanksKeyDown = (e: React.KeyboardEvent, field: 'right' | 'result') => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (field === 'right') {
+        setEditingField('result');
+        setTimeout(() => resultInputRef.current?.focus(), 0);
+      } else {
+        handleFinishEdit();
+      }
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      if (field === 'right') {
+        setEditingField('result');
+        setTimeout(() => resultInputRef.current?.focus(), 0);
+      } else {
+        handleFinishEdit();
+        onAddAfter(index);
+      }
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditingField(null);
+      setOperator(problem.operator || '+');
+      setRightOperand(problem.rightOperand || '');
+      setResult(problem.result || '');
     }
   };
 
@@ -201,6 +250,14 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       currentProblem = isEditing ? 
         { ...problem, question, options } : 
         problem;
+    } else if (problem.type === 'word-problem') {
+      currentProblem = isEditing ? 
+        { ...problem, problemText } : 
+        problem;
+    } else if (problem.type === 'fill-blanks') {
+      currentProblem = isEditing ? 
+        { ...problem, operator, rightOperand, result } : 
+        problem;
     } else {
       currentProblem = isEditing ? 
         { ...problem, leftOperand, operator, rightOperand } : 
@@ -210,6 +267,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
     if (!MathFormatter.validateProblem(currentProblem)) {
       if (problem.type === 'multiple-choice') {
         return { isValid: false, message: 'Invalid multiple choice question' };
+      } else if (problem.type === 'word-problem') {
+        return { isValid: false, message: 'Invalid word problem' };
+      } else if (problem.type === 'fill-blanks') {
+        return { isValid: false, message: 'Invalid fill-blanks problem' };
       } else {
         return { isValid: false, message: 'Invalid math problem' };
       }
@@ -576,6 +637,125 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                 {problemText.length}/500 characters
               </div>
             </div>
+          ) : problem.type === 'fill-blanks' ? (
+            /* Fill-Blanks Editing */
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px',
+              fontSize: '20px',
+              fontFamily: 'monospace',
+              marginBottom: '15px'
+            }}>
+              {/* Blank placeholder */}
+              <span style={{ 
+                fontSize: '18px', 
+                color: '#666',
+                minWidth: '60px',
+                textAlign: 'center',
+                padding: '6px 8px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: '#f8f9fa'
+              }}>
+                ____
+              </span>
+
+              {/* Operator */}
+              <select
+                ref={operatorSelectRef}
+                value={operator}
+                onChange={(e) => handleOperatorChange(e.target.value)}
+                onFocus={() => setEditingField('operator')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    setEditingField('right');
+                    if (rightInputRef.current) {
+                      rightInputRef.current.focus();
+                      rightInputRef.current.select();
+                    }
+                  } else if (e.key === 'Escape') {
+                    setIsEditing(false);
+                    setEditingField(null);
+                    setOperator(problem.operator || '+');
+                    setRightOperand(problem.rightOperand || '');
+                    setResult(problem.result || '');
+                  }
+                }}
+                style={{
+                  border: editingField === 'operator' ? '2px solid #3182ce' : '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '6px 8px',
+                  fontSize: '18px',
+                  fontFamily: 'monospace',
+                  backgroundColor: editingField === 'operator' ? '#f0f8ff' : '#f8f9fa',
+                  cursor: 'pointer',
+                  minWidth: '50px',
+                  outline: 'none'
+                }}
+              >
+                <option value="+">+</option>
+                <option value="-">-</option>
+                <option value="*">*</option>
+                <option value="/">/</option>
+              </select>
+
+              {/* Right operand */}
+              <input
+                ref={rightInputRef}
+                type="text"
+                value={rightOperand}
+                onChange={(e) => setRightOperand(e.target.value)}
+                onKeyDown={(e) => handleFillBlanksKeyDown(e, 'right')}
+                onFocus={() => setEditingField('right')}
+                onBlur={(e) => {
+                  const relatedTarget = e.relatedTarget as HTMLElement;
+                  if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
+                    handleFinishEdit();
+                  }
+                }}
+                style={{
+                  border: editingField === 'right' ? '2px solid #3182ce' : '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '6px 8px',
+                  fontSize: '18px',
+                  fontFamily: 'monospace',
+                  width: '60px',
+                  textAlign: 'center',
+                  backgroundColor: editingField === 'right' ? '#f0f8ff' : 'transparent'
+                }}
+              />
+
+              {/* Equals sign */}
+              <span style={{ fontSize: '18px', color: '#666' }}>=</span>
+
+              {/* Result */}
+              <input
+                ref={resultInputRef}
+                type="text"
+                value={result}
+                onChange={(e) => setResult(e.target.value)}
+                onKeyDown={(e) => handleFillBlanksKeyDown(e, 'result')}
+                onFocus={() => setEditingField('result')}
+                onBlur={(e) => {
+                  const relatedTarget = e.relatedTarget as HTMLElement;
+                  if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
+                    handleFinishEdit();
+                  }
+                }}
+                style={{
+                  border: editingField === 'result' ? '2px solid #3182ce' : '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '6px 8px',
+                  fontSize: '18px',
+                  fontFamily: 'monospace',
+                  width: '60px',
+                  textAlign: 'center',
+                  backgroundColor: editingField === 'result' ? '#f0f8ff' : 'transparent'
+                }}
+              />
+            </div>
           ) : (
             /* Basic Equation Editing */
             <div style={{ 
@@ -697,7 +877,9 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
               ? 'Click fields to edit • Esc: Cancel'
               : problem.type === 'word-problem'
                 ? 'Type your word problem • Esc: Cancel'
-                : 'Enter/Tab: Next field • Type +, -, *, / for operators • Esc: Cancel'
+                : problem.type === 'fill-blanks'
+                  ? 'Enter/Tab: Next field • Start with operator • Esc: Cancel'
+                  : 'Enter/Tab: Next field • Type +, -, *, / for operators • Esc: Cancel'
             }
           </div>
 

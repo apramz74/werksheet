@@ -32,6 +32,14 @@ export class MathFormatter {
       );
     } else if (problem.type === 'word-problem') {
       return Boolean(problem.problemText && problem.problemText.trim());
+    } else if (problem.type === 'fill-blanks') {
+      return (
+        this.validateOperator(problem.operator || '') &&
+        Boolean(problem.rightOperand) &&
+        this.validateNumber(problem.rightOperand || '') &&
+        Boolean(problem.result) &&
+        this.validateNumber(problem.result || '')
+      );
     } else {
       // Basic equation validation
       return (
@@ -44,11 +52,13 @@ export class MathFormatter {
     }
   }
 
-  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' | 'word-problem' = 'basic-equation'): MathProblem {
+  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' = 'basic-equation'): MathProblem {
     if (type === 'multiple-choice') {
       return this.createBlankMultipleChoice();
     } else if (type === 'word-problem') {
       return this.createBlankWordProblem();
+    } else if (type === 'fill-blanks') {
+      return this.createBlankFillBlanks();
     } else {
       return {
         id: Math.random().toString(36).substr(2, 9),
@@ -80,6 +90,17 @@ export class MathFormatter {
     };
   }
 
+  public static createBlankFillBlanks(): MathProblem {
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'fill-blanks',
+      operator: '+',
+      rightOperand: '3',
+      result: '8',
+      isEditing: true
+    };
+  }
+
   public static formatForDisplay(problem: MathProblem): string {
     if (problem.type === 'multiple-choice') {
       const optionsText = problem.options?.map((option, index) => 
@@ -88,6 +109,8 @@ export class MathFormatter {
       return `${problem.question || ''}\n${optionsText}`;
     } else if (problem.type === 'word-problem') {
       return `${problem.problemText || ''}\n____________________`;
+    } else if (problem.type === 'fill-blanks') {
+      return `____ ${problem.operator || ''} ${problem.rightOperand || ''} = ${problem.result || ''}`;
     } else {
       return `${problem.leftOperand || ''} ${problem.operator || ''} ${problem.rightOperand || ''} = ____`;
     }

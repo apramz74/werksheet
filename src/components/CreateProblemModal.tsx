@@ -65,7 +65,7 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
       title: 'Fill in Blanks',
       description: 'Complete the equation',
       example: '__ + 3 = 8',
-      available: false
+      available: true
     }
   ];
 
