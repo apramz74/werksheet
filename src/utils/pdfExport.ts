@@ -71,7 +71,7 @@ const renderCompactProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex: 
 
 // Render problem in two-column format for PDF
 const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex: number, x: number, y: number): number => {
-  pdf.setFontSize(12);
+  pdf.setFontSize(14); // Match single column question number size
   pdf.setFont('helvetica', 'bold');
   pdf.text(`${globalIndex + 1}.`, x, y);
   
