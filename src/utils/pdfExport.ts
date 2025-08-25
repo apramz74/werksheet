@@ -87,11 +87,12 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
     
     // Options (more compact)
     pdf.setFontSize(10);
+    pdf.setLineWidth(0.005); // Initialize graphics state for proper circle rendering
     problem.options?.forEach((option, optIndex) => {
       const letter = String.fromCharCode(65 + optIndex);
       
-      // Smaller circle
-      pdf.circle(contentX + 0.1, currentY - 0.03, 0.04, 'S');
+      // Circle for multiple choice option - larger radius for visibility
+      pdf.circle(contentX + 0.1, currentY - 0.03, 0.06, 'S');
       pdf.text(`${letter}) ${option}`, contentX + 0.25, currentY);
       currentY += 0.12;
     });

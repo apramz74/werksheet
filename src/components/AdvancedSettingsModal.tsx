@@ -1,6 +1,62 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { WorksheetSettings, WorksheetLayout } from '../types';
 
+// Layout preview graphics components
+const SingleColumnPreview = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '40px', height: '24px' }}>
+    <div style={{ width: '100%', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    <div style={{ width: '100%', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    <div style={{ width: '100%', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    <div style={{ width: '100%', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+  </div>
+);
+
+const TwoColumnPreview = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '40px', height: '24px' }}>
+    <div style={{ display: 'flex', gap: '4px' }}>
+      <div style={{ width: '18px', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+      <div style={{ width: '18px', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    </div>
+    <div style={{ display: 'flex', gap: '4px' }}>
+      <div style={{ width: '18px', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+      <div style={{ width: '18px', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    </div>
+    <div style={{ display: 'flex', gap: '4px' }}>
+      <div style={{ width: '18px', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+      <div style={{ width: '18px', height: '3px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    </div>
+  </div>
+);
+
+const CompactGridPreview = () => (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '2px', width: '40px', height: '24px' }}>
+    {Array.from({ length: 10 }).map((_, i) => (
+      <div key={i} style={{ width: '6px', height: '6px', backgroundColor: '#d1d5db', borderRadius: '1px' }}></div>
+    ))}
+  </div>
+);
+
+const layoutOptions = [
+  {
+    value: 'single-column' as WorksheetLayout,
+    label: 'Single Column',
+    description: 'One problem per row (best for complex problems)',
+    preview: <SingleColumnPreview />
+  },
+  {
+    value: 'two-column' as WorksheetLayout,
+    label: 'Two Column', 
+    description: 'Two problems side by side (good for basic equations)',
+    preview: <TwoColumnPreview />
+  },
+  {
+    value: 'compact-grid' as WorksheetLayout,
+    label: 'Compact Grid',
+    description: 'Grid layout with vertical format (for simple math only)',
+    preview: <CompactGridPreview />
+  }
+];
+
 interface AdvancedSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,7 +72,9 @@ const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
 }) => {
   const [footnote, setFootnote] = useState(settings.footnote);
   const [layout, setLayout] = useState<WorksheetLayout>(settings.layout);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -28,6 +86,7 @@ const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
   const handleCancel = useCallback(() => {
     setFootnote(settings.footnote);
     setLayout(settings.layout);
+    setIsDropdownOpen(false);
     onClose();
   }, [settings.footnote, settings.layout, onClose]);
 
@@ -41,6 +100,9 @@ const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         handleCancel();
+      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
       }
     };
 
@@ -142,7 +204,7 @@ const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
           <textarea
             value={footnote}
             onChange={(e) => setFootnote(e.target.value)}
-            placeholder="Optional text that appears at the bottom of each page (e.g., 'Name: _____ Date: _____')"
+            placeholder="e.g., Name: _____ Date: _____"
             rows={3}
             style={{
               width: '100%',
@@ -182,39 +244,120 @@ const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
           }}>
             Worksheet Layout
           </label>
-          <select
-            value={layout}
-            onChange={(e) => setLayout(e.target.value as WorksheetLayout)}
-            style={{
-              width: '100%',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              padding: '8px 12px',
-              fontSize: '14px',
-              fontFamily: 'inherit',
-              backgroundColor: 'white',
-              boxSizing: 'border-box',
-              outline: 'none'
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#3182ce';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#d1d5db';
-            }}
-          >
-            <option value="single-column">Single Column</option>
-            <option value="two-column">Two Column</option>
-            <option value="compact-grid">Compact Grid</option>
-          </select>
-          <div style={{
-            fontSize: '12px',
-            color: '#6b7280',
-            marginTop: '4px'
-          }}>
-            <strong>Single Column:</strong> One problem per row (best for complex problems)<br/>
-            <strong>Two Column:</strong> Two problems side by side (good for basic equations)<br/>
-            <strong>Compact Grid:</strong> Grid layout with vertical format (for simple math only)
+          
+          {/* Custom Visual Dropdown */}
+          <div ref={dropdownRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={{
+                width: '100%',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                padding: '12px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                backgroundColor: 'white',
+                boxSizing: 'border-box',
+                outline: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                textAlign: 'left'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3182ce';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#d1d5db';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {layoutOptions.find(option => option.value === layout)?.preview}
+                <div>
+                  <div style={{ fontWeight: '500' }}>
+                    {layoutOptions.find(option => option.value === layout)?.label}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                    {layoutOptions.find(option => option.value === layout)?.description}
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s'
+              }}>
+                ▼
+              </div>
+            </button>
+
+            {/* Dropdown Options */}
+            {isDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                marginTop: '4px',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                zIndex: 1000,
+                overflow: 'hidden'
+              }}>
+                {layoutOptions.map((option, index) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setLayout(option.value);
+                      setIsDropdownOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: 'none',
+                      backgroundColor: layout === option.value ? '#f0f9ff' : 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      fontSize: '14px',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      borderTop: index > 0 ? '1px solid #f3f4f6' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (layout !== option.value) {
+                        e.currentTarget.style.backgroundColor = '#f9fafb';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (layout !== option.value) {
+                        e.currentTarget.style.backgroundColor = 'white';
+                      }
+                    }}
+                  >
+                    {option.preview}
+                    <div>
+                      <div style={{ fontWeight: '500', color: '#374151' }}>
+                        {option.label}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                        {option.description}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
