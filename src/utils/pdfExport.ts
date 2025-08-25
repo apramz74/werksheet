@@ -81,7 +81,7 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
   
   if (problem.type === 'multiple-choice') {
     // Question
-    pdf.setFontSize(11);
+    pdf.setFontSize(14); // Match single column and option font size
     pdf.text(problem.question || '', contentX, currentY);
     currentY += 0.15;
     
