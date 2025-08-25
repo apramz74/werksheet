@@ -85,8 +85,8 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
     pdf.text(problem.question || '', contentX, currentY);
     currentY += 0.15;
     
-    // Options (more compact)
-    pdf.setFontSize(10);
+    // Options (same font size and spacing as single column)
+    pdf.setFontSize(14); // Match single column font size
     pdf.setLineWidth(0.005); // Initialize graphics state for proper circle rendering
     problem.options?.forEach((option, optIndex) => {
       const letter = String.fromCharCode(65 + optIndex);
@@ -94,7 +94,7 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
       // Circle for multiple choice option - larger radius for visibility
       pdf.circle(contentX + 0.1, currentY - 0.03, 0.06, 'S');
       pdf.text(`${letter}) ${option}`, contentX + 0.25, currentY);
-      currentY += 0.12;
+      currentY += 0.2; // Use SPACING.multipleChoiceOptionHeight for consistency
     });
     
     return currentY - y + 0.1;
