@@ -84,13 +84,33 @@ export function calculateWordProblemHeight(problemText: string): number {
 /**
  * Calculate the height a problem will take based on its type
  */
-export function calculateProblemHeight(problem: MathProblem): number {
+export function calculateProblemHeight(problem: MathProblem, layout: string = 'single-column'): number {
+  if (layout === 'two-column') {
+    return calculateTwoColumnProblemHeight(problem);
+  }
+  
   if (problem.type === 'multiple-choice') {
     return calculateMultipleChoiceHeight(problem.options?.length || 0);
   } else if (problem.type === 'word-problem') {
     return calculateWordProblemHeight(problem.problemText || '');
   } else {
     return calculateBasicEquationHeight();
+  }
+}
+
+/**
+ * Calculate the height a problem will take in two-column layout
+ */
+function calculateTwoColumnProblemHeight(problem: MathProblem): number {
+  if (problem.type === 'multiple-choice') {
+    // Question height + options height + extra spacing
+    return 0.25 + (problem.options?.length || 0) * 0.2 + 0.1;
+  } else if (problem.type === 'fill-blanks' || problem.type === 'basic-equation') {
+    // Much more compact in two-column
+    return 0.25;
+  } else {
+    // Word problems fall back to single column in two-column layout
+    return calculateWordProblemHeight(problem.problemText || '');
   }
 }
 
@@ -120,27 +140,66 @@ export function calculateContentHeight(hasFootnote: boolean = false): number {
 /**
  * Split problems into pages based on height calculations
  */
-export function paginateProblems(problems: MathProblem[], hasFootnote: boolean = false): MathProblem[][] {
+export function paginateProblems(problems: MathProblem[], hasFootnote: boolean = false, layout: string = 'single-column'): MathProblem[][] {
   const pages: MathProblem[][] = [];
   let currentPage: MathProblem[] = [];
   let currentPageHeight = 0;
   const maxContentHeight = calculateContentHeight(hasFootnote);
 
-  problems.forEach((problem) => {
-    const problemHeight = calculateProblemHeight(problem);
+  if (layout === 'two-column') {
+    // For two-column layout, problems are arranged in pairs
+    // Each pair takes roughly the height of the taller problem plus spacing
+    let leftColumnY = 0;
+    let rightColumnY = 0;
     
-    // Check if adding this problem would exceed page height
-    if (currentPageHeight + problemHeight > maxContentHeight && currentPage.length > 0) {
-      // Start a new page
-      pages.push(currentPage);
-      currentPage = [problem];
-      currentPageHeight = problemHeight;
-    } else {
-      // Add to current page
-      currentPage.push(problem);
-      currentPageHeight += problemHeight;
-    }
-  });
+    problems.forEach((problem) => {
+      const problemHeight = calculateProblemHeight(problem, layout);
+      const isLeftColumn = currentPage.length % 2 === 0;
+      
+      if (isLeftColumn) {
+        // Check if we can fit this problem in left column
+        if (leftColumnY + problemHeight > maxContentHeight && currentPage.length > 0) {
+          // Start new page
+          pages.push(currentPage);
+          currentPage = [problem];
+          leftColumnY = problemHeight + 0.15; // Add spacing
+          rightColumnY = 0;
+        } else {
+          currentPage.push(problem);
+          leftColumnY += problemHeight + 0.15;
+        }
+      } else {
+        // Right column - check if we can fit
+        if (rightColumnY + problemHeight > maxContentHeight && currentPage.length > 0) {
+          // Start new page, put this problem in left column of new page
+          pages.push(currentPage);
+          currentPage = [problem];
+          leftColumnY = problemHeight + 0.15;
+          rightColumnY = 0;
+        } else {
+          currentPage.push(problem);
+          rightColumnY += problemHeight + 0.15;
+        }
+      }
+    });
+  } else {
+    // Original single-column logic
+    problems.forEach((problem) => {
+      const problemHeight = calculateProblemHeight(problem, layout);
+      
+      // Check if adding this problem would exceed page height
+      if (currentPageHeight + problemHeight > maxContentHeight && currentPage.length > 0) {
+        // Start a new page
+        pages.push(currentPage);
+        currentPage = [problem];
+        currentPageHeight = problemHeight;
+      } else {
+        // Add to current page
+        currentPage.push(problem);
+        currentPageHeight += problemHeight;
+      }
+    });
+  }
 
   // Add the last page if it has content
   if (currentPage.length > 0) {
@@ -154,19 +213,19 @@ export function paginateProblems(problems: MathProblem[], hasFootnote: boolean =
 /**
  * Calculate remaining space on a page
  */
-export function calculateRemainingSpace(problems: MathProblem[], hasFootnote: boolean = false): number {
-  const totalHeight = problems.reduce((sum, problem) => sum + calculateProblemHeight(problem), 0);
+export function calculateRemainingSpace(problems: MathProblem[], hasFootnote: boolean = false, layout: string = 'single-column'): number {
+  const totalHeight = problems.reduce((sum, problem) => sum + calculateProblemHeight(problem, layout), 0);
   return Math.max(0, calculateContentHeight(hasFootnote) - totalHeight);
 }
 
 /**
  * Calculate how many more problems of each type could fit on current page
  */
-export function calculateRemainingCapacity(currentProblems: MathProblem[], hasFootnote: boolean = false): {
+export function calculateRemainingCapacity(currentProblems: MathProblem[], hasFootnote: boolean = false, layout: string = 'single-column'): {
   basicEquations: number;
   multipleChoice: number;
 } {
-  const remainingSpace = calculateRemainingSpace(currentProblems, hasFootnote);
+  const remainingSpace = calculateRemainingSpace(currentProblems, hasFootnote, layout);
   const basicEquationHeight = calculateBasicEquationHeight();
   const multipleChoiceHeight = calculateMultipleChoiceHeight(4); // Assume average of 4 options
 

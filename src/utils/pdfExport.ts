@@ -158,7 +158,7 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
   
   // Use pagination logic to split problems across pages
   const hasFootnote = settings.footnote.trim().length > 0;
-  const pages = paginateProblems(validProblems, hasFootnote);
+  const pages = paginateProblems(validProblems, hasFootnote, settings.layout);
   
   pages.forEach((pageProblems, pageIndex) => {
     if (pageIndex > 0) {
