@@ -91,8 +91,8 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
     problem.options?.forEach((option, optIndex) => {
       const letter = String.fromCharCode(65 + optIndex);
       
-      // Circle for multiple choice option - match single column radius
-      pdf.circle(contentX + 0.1, currentY - 0.03, 0.08, 'S');
+      // Circle for multiple choice option - match single column radius and alignment
+      pdf.circle(contentX + 0.1, currentY - 0.05, 0.08, 'S');
       pdf.text(`${letter}) ${option}`, contentX + 0.25, currentY);
       currentY += 0.2; // Use SPACING.multipleChoiceOptionHeight for consistency
     });
