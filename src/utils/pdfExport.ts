@@ -167,11 +167,13 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
     
     let currentY: number = margin;
 
-    // Header
-    pdf.setFontSize(20);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(settings.title, pageWidth / 2, currentY + 0.5, { align: 'center' });
-    currentY += 0.5 + SPACING.headerSpacing + 0.4; // Extra space after title
+    // Header (only on first page)
+    if (pageIndex === 0) {
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(settings.title, pageWidth / 2, currentY + 0.5, { align: 'center' });
+      currentY += 0.5 + SPACING.headerSpacing + 0.4; // Extra space after title
+    }
 
     // Render problems based on layout
     if (settings.layout === 'compact-grid') {
