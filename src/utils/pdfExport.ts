@@ -73,10 +73,13 @@ const renderCompactProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex: 
 const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex: number, x: number, y: number): number => {
   pdf.setFontSize(14); // Match single column question number size
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${globalIndex + 1}.`, x, y);
+  const questionNumber = `${globalIndex + 1}.`;
+  pdf.text(questionNumber, x, y);
   
   pdf.setFont('helvetica', 'normal');
-  const contentX = x + 0.25;
+  // Dynamic spacing based on question number length
+  const numberWidth = pdf.getTextWidth(questionNumber);
+  const contentX = x + numberWidth + 0.1; // Base spacing plus number width
   let currentY = y;
   
   if (problem.type === 'multiple-choice') {
