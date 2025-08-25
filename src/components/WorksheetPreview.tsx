@@ -116,7 +116,7 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
 
   // Pagination state
   const hasFootnote = settings.footnote.trim().length > 0;
-  const pages = paginateProblems(validProblems, hasFootnote);
+  const pages = paginateProblems(validProblems, hasFootnote, settings.layout);
   const [currentPage, setCurrentPage] = useState(0);
 
   const handlePrevPage = useCallback(() => {
@@ -204,25 +204,27 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
             marginBottom: `${-(PAGE_DIMENSIONS_PX.height * 0.3)}px`,
           }}
         >
-          {/* Header */}
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: "35px",
-            }}
-          >
-            <h1
+          {/* Header (only on first page) */}
+          {currentPage === 0 && (
+            <div
               style={{
-                fontSize: `${FONT_SIZES.title}px`,
-                margin: "0",
-                color: "#000",
-                fontWeight: "bold",
-                fontFamily: "Helvetica, Arial, sans-serif",
+                textAlign: "center",
+                marginBottom: "35px",
               }}
             >
-              {settings.title}
-            </h1>
-          </div>
+              <h1
+                style={{
+                  fontSize: `${FONT_SIZES.title}px`,
+                  margin: "0",
+                  color: "#000",
+                  fontWeight: "bold",
+                  fontFamily: "Helvetica, Arial, sans-serif",
+                }}
+              >
+                {settings.title}
+              </h1>
+            </div>
+          )}
 
           {/* Problems */}
           <div>
