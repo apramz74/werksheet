@@ -117,9 +117,11 @@ function calculateTwoColumnProblemHeight(problem: MathProblem): number {
 /**
  * Calculate the height of the worksheet header
  */
-export function calculateHeaderHeight(): number {
-  // Title + spacing (simplified header - no name/date lines or horizontal divider)
-  const titleHeight = (FONT_SIZES.title / DPI) + SPACING.headerSpacing + 0.4; // Extra space after title
+export function calculateHeaderHeight(fontScale: number = 1.0): number {
+  // Title + spacing (simplified header - no name/date lines or horizontal divider)  
+  // Scale spacing relative to font size - larger fonts need more space
+  const titleSpacing = 0.4 + (0.8 * Math.min(fontScale, 2.0)); // Base 0.4" + scaled spacing
+  const titleHeight = (FONT_SIZES.title / DPI) + SPACING.headerSpacing + titleSpacing;
   
   return titleHeight;
 }
@@ -127,14 +129,41 @@ export function calculateHeaderHeight(): number {
 /**
  * Calculate the available content height per page
  */
-export function calculateContentHeight(hasFootnote: boolean = false): number {
+export function calculateContentHeight(hasFootnote: boolean = false, fontScale: number = 1.0): number {
   const footnoteSpace = hasFootnote ? SPACING.footnoteHeight : 0;
   return (
     PAGE_DIMENSIONS.height -
     PAGE_DIMENSIONS.margin * 2 -
-    calculateHeaderHeight() -
+    calculateHeaderHeight(fontScale) -
     footnoteSpace
   );
+}
+
+/**
+ * Calculate font scale for a given number of problems
+ */
+function calculateFontScaleForPagination(problemCount: number, layout: string): number {
+  // Only apply scaling for single pages with few problems
+  if (problemCount > 15) return 1.0; // No scaling for many problems
+  
+  if (layout === 'two-column') {
+    // Two-column can fit more problems, so scale more aggressively
+    if (problemCount <= 2) return 2.8;
+    if (problemCount <= 4) return 2.2;
+    if (problemCount <= 6) return 1.8;
+    if (problemCount <= 8) return 1.5;
+    if (problemCount <= 10) return 1.3;
+    return 1.1;
+  } else {
+    // Single column and compact grid - scale very aggressively
+    if (problemCount <= 1) return 3.5;
+    if (problemCount <= 2) return 2.8;
+    if (problemCount <= 3) return 2.4;
+    if (problemCount <= 4) return 2.0;
+    if (problemCount <= 6) return 1.7;
+    if (problemCount <= 8) return 1.4;
+    return 1.2;
+  }
 }
 
 /**
@@ -144,7 +173,10 @@ export function paginateProblems(problems: MathProblem[], hasFootnote: boolean =
   const pages: MathProblem[][] = [];
   let currentPage: MathProblem[] = [];
   let currentPageHeight = 0;
-  const maxContentHeight = calculateContentHeight(hasFootnote);
+  
+  // Calculate font scale to determine proper content height
+  const fontScale = calculateFontScaleForPagination(problems.length, layout);
+  const maxContentHeight = calculateContentHeight(hasFootnote, fontScale);
 
   if (layout === 'two-column') {
     // For two-column layout, problems are arranged in pairs
@@ -214,8 +246,9 @@ export function paginateProblems(problems: MathProblem[], hasFootnote: boolean =
  * Calculate remaining space on a page
  */
 export function calculateRemainingSpace(problems: MathProblem[], hasFootnote: boolean = false, layout: string = 'single-column'): number {
+  const fontScale = calculateFontScaleForPagination(problems.length, layout);
   const totalHeight = problems.reduce((sum, problem) => sum + calculateProblemHeight(problem, layout), 0);
-  return Math.max(0, calculateContentHeight(hasFootnote) - totalHeight);
+  return Math.max(0, calculateContentHeight(hasFootnote, fontScale) - totalHeight);
 }
 
 /**
@@ -226,6 +259,7 @@ export function calculateRemainingCapacity(currentProblems: MathProblem[], hasFo
   multipleChoice: number;
 } {
   const remainingSpace = calculateRemainingSpace(currentProblems, hasFootnote, layout);
+  const fontScale = calculateFontScaleForPagination(currentProblems.length, layout);
   const basicEquationHeight = calculateBasicEquationHeight();
   const multipleChoiceHeight = calculateMultipleChoiceHeight(4); // Assume average of 4 options
 
