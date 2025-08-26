@@ -198,7 +198,7 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
 
     // Header (only on first page)
     if (pageIndex === 0) {
-      pdf.setFontSize(20 * fontScale);
+      pdf.setFontSize(20); // Keep title font size unchanged
       pdf.setFont('helvetica', 'bold');
       pdf.text(settings.title, pageWidth / 2, currentY + 0.5, { align: 'center' });
       currentY += 0.5 + SPACING.headerSpacing + 0.4; // Extra space after title
@@ -345,65 +345,69 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
         pdf.setFont('helvetica', 'bold');
         const questionNumber = `${globalIndex + 1}.`;
         pdf.text(questionNumber, margin, currentY);
+        
+        // Calculate proper spacing based on actual question number width
+        const questionNumberWidth = pdf.getTextWidth(questionNumber);
+        const questionStartX = margin + questionNumberWidth + 0.1 * fontScale;
 
         if (problem.type === 'multiple-choice') {
           pdf.setFont('helvetica', 'normal');
-          pdf.text(problem.question || '', margin + 0.3 * fontScale, currentY);
+          pdf.text(problem.question || '', questionStartX, currentY);
           currentY += SPACING.multipleChoiceQuestionHeight * fontScale;
 
           pdf.setLineWidth(0.005); // Initialize graphics state for proper circle rendering
           problem.options?.forEach((option, optIndex) => {
             const letter = String.fromCharCode(65 + optIndex);
-            const circleX = margin + 0.4 * fontScale;
+            const circleX = questionStartX + 0.1 * fontScale;
             const circleY = currentY - 0.05 * fontScale;
             pdf.circle(circleX, circleY, 0.08 * fontScale, 'S');
-            pdf.text(`${letter})`, margin + 0.6 * fontScale, currentY);
-            pdf.text(option, margin + 0.9 * fontScale, currentY);
+            pdf.text(`${letter})`, questionStartX + 0.2 * fontScale, currentY);
+            pdf.text(option, questionStartX + 0.5 * fontScale, currentY);
             currentY += SPACING.multipleChoiceOptionHeight * fontScale;
           });
           
         } else if (problem.type === 'word-problem') {
           pdf.setFont('helvetica', 'normal');
           const problemText = problem.problemText || '';
-          const maxWidth = pageWidth - margin * 2 - 0.3;
+          const maxWidth = pageWidth - questionStartX - margin;
           const lines = pdf.splitTextToSize(problemText, maxWidth);
           
           lines.forEach((line: string, lineIndex: number) => {
-            pdf.text(line, margin + 0.3, currentY + (lineIndex * 0.2));
+            pdf.text(line, questionStartX, currentY + (lineIndex * 0.2 * fontScale));
           });
           
-          currentY += lines.length * 0.2 + 0.2;
-          const lineStartX = margin + 0.3;
-          const lineEndX = lineStartX + 2;
+          currentY += lines.length * 0.2 * fontScale + 0.2 * fontScale;
+          const lineStartX = questionStartX;
+          const lineEndX = lineStartX + 2 * fontScale;
           pdf.setLineWidth(0.005);
-          pdf.line(lineStartX, currentY + 0.02, lineEndX, currentY + 0.02);
-          currentY += SPACING.basicEquationHeight;
+          pdf.line(lineStartX, currentY + 0.02 * fontScale, lineEndX, currentY + 0.02 * fontScale);
+          currentY += SPACING.basicEquationHeight * fontScale;
           
         } else if (problem.type === 'fill-blanks') {
           pdf.setFont('helvetica', 'normal');
-          const lineStartX = margin + 0.3;
-          const lineEndX = lineStartX + 1;
+          const lineStartX = questionStartX;
+          const lineEndX = lineStartX + 1 * fontScale;
           pdf.setLineWidth(0.005);
-          pdf.line(lineStartX, currentY + 0.02, lineEndX, currentY + 0.02);
+          pdf.line(lineStartX, currentY + 0.02 * fontScale, lineEndX, currentY + 0.02 * fontScale);
           
           const restOfEquation = ` ${problem.operator} ${problem.rightOperand} = ${problem.result}`;
-          pdf.text(restOfEquation, lineEndX + 0.1, currentY);
-          currentY += SPACING.basicEquationHeight;
+          pdf.text(restOfEquation, lineEndX + 0.1 * fontScale, currentY);
+          currentY += SPACING.basicEquationHeight * fontScale;
           
         } else {
           const equation = `${problem.leftOperand} ${problem.operator} ${problem.rightOperand} = `;
           pdf.setFont('helvetica', 'normal');
-          pdf.text(equation, margin + 0.3, currentY);
+          pdf.text(equation, questionStartX, currentY);
           
           const textWidth = pdf.getTextWidth(equation);
-          const lineStartX = margin + 0.3 + textWidth;
-          const lineEndX = lineStartX + 1;
+          const lineStartX = questionStartX + textWidth;
+          const lineEndX = lineStartX + 1 * fontScale;
           pdf.setLineWidth(0.005);
-          pdf.line(lineStartX, currentY + 0.02, lineEndX, currentY + 0.02);
-          currentY += SPACING.basicEquationHeight;
+          pdf.line(lineStartX, currentY + 0.02 * fontScale, lineEndX, currentY + 0.02 * fontScale);
+          currentY += SPACING.basicEquationHeight * fontScale;
         }
 
-        currentY += SPACING.problemSpacing;
+        currentY += SPACING.problemSpacing * fontScale;
       });
     }
 
