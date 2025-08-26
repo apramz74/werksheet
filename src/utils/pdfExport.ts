@@ -145,19 +145,21 @@ const calculateFontScale = (problemCount: number, layout: string): number => {
   if (problemCount > 15) return 1.0; // No scaling for many problems
   
   if (layout === 'two-column') {
-    // Two-column can fit more problems, so scale differently
-    if (problemCount <= 2) return 1.8;
-    if (problemCount <= 4) return 1.5;
-    if (problemCount <= 6) return 1.3;
-    if (problemCount <= 8) return 1.2;
+    // Two-column can fit more problems, so scale more aggressively
+    if (problemCount <= 2) return 2.8;
+    if (problemCount <= 4) return 2.2;
+    if (problemCount <= 6) return 1.8;
+    if (problemCount <= 8) return 1.5;
+    if (problemCount <= 10) return 1.3;
     return 1.1;
   } else {
-    // Single column and compact grid
-    if (problemCount <= 1) return 2.2;
-    if (problemCount <= 2) return 1.8;
-    if (problemCount <= 3) return 1.6;
-    if (problemCount <= 4) return 1.4;
-    if (problemCount <= 6) return 1.3;
+    // Single column and compact grid - scale very aggressively
+    if (problemCount <= 1) return 3.5;
+    if (problemCount <= 2) return 2.8;
+    if (problemCount <= 3) return 2.4;
+    if (problemCount <= 4) return 2.0;
+    if (problemCount <= 6) return 1.7;
+    if (problemCount <= 8) return 1.4;
     return 1.2;
   }
 };
