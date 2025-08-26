@@ -203,7 +203,7 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
       pdf.setFontSize(20); // Keep title font size unchanged
       pdf.setFont('helvetica', 'bold');
       pdf.text(settings.title, pageWidth / 2, currentY + 0.5, { align: 'center' });
-      currentY += 0.5 + SPACING.headerSpacing + 0.4; // Extra space after title
+      currentY += 0.5 + SPACING.headerSpacing + 1.2; // Much more space after title for name/date
     }
 
     // Render problems based on layout
