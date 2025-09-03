@@ -120,7 +120,9 @@ function calculateTwoColumnProblemHeight(problem: MathProblem): number {
 export function calculateHeaderHeight(fontScale: number = 1.0): number {
   // Title + spacing (simplified header - no name/date lines or horizontal divider)  
   // Scale spacing relative to font size - larger fonts need more space
-  const titleSpacing = 0.4 + (0.8 * Math.min(fontScale, 2.0)); // Base 0.4" + scaled spacing
+  // Only add extra spacing for fonts larger than normal (> 1.0)
+  const extraSpacing = Math.max(0, (fontScale - 1.0) * 0.8);
+  const titleSpacing = 0.4 + extraSpacing; // Base 0.4" + scaled spacing only for large fonts
   const titleHeight = (FONT_SIZES.title / DPI) + SPACING.headerSpacing + titleSpacing;
   
   return titleHeight;

@@ -213,7 +213,9 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
       pdf.setFont('helvetica', 'bold');
       pdf.text(settings.title, pageWidth / 2, currentY + 0.5, { align: 'center' });
       // Scale spacing relative to font size - larger fonts need more space
-      const titleSpacing = 0.4 + (0.8 * Math.min(fontScale, 2.0)); // Base 0.4" + scaled spacing
+      // Only add extra spacing for fonts larger than normal (> 1.0)
+      const extraSpacing = Math.max(0, (fontScale - 1.0) * 0.8);
+      const titleSpacing = 0.4 + extraSpacing; // Base 0.4" + scaled spacing only for large fonts
       currentY += 0.5 + SPACING.headerSpacing + titleSpacing;
     }
 
