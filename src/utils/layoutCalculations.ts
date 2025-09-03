@@ -260,7 +260,6 @@ export function calculateRemainingCapacity(currentProblems: MathProblem[], hasFo
   multipleChoice: number;
 } {
   const remainingSpace = calculateRemainingSpace(currentProblems, hasFootnote, layout);
-  const fontScale = calculateFontScaleForPagination(currentProblems.length, layout);
   const basicEquationHeight = calculateBasicEquationHeight();
   const multipleChoiceHeight = calculateMultipleChoiceHeight(4); // Assume average of 4 options
 
