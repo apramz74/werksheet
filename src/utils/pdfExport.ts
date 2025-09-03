@@ -188,13 +188,18 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
   const hasFootnote = settings.footnote.trim().length > 0;
   const pages = paginateProblems(validProblems, hasFootnote, settings.layout);
   
-  // Calculate font scale for first page if it's the only page with few problems
-  const fontScale = pages.length === 1 ? calculateFontScale(validProblems.length, settings.layout) : 1.0;
+  // Calculate font scale per page - only scale if single page with few problems
+  const getFontScaleForPage = (pageIndex: number, pageProblems: MathProblem[]) => {
+    return pages.length === 1 ? calculateFontScale(validProblems.length, settings.layout) : 1.0;
+  };
   
   pages.forEach((pageProblems, pageIndex) => {
     if (pageIndex > 0) {
       pdf.addPage();
     }
+    
+    // Get font scale for this specific page
+    const fontScale = getFontScaleForPage(pageIndex, pageProblems);
     
     let currentY: number = margin;
 
