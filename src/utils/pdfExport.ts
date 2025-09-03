@@ -190,7 +190,11 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
   
   // Calculate font scale per page - only scale if single page with few problems
   const getFontScaleForPage = (pageIndex: number, pageProblems: MathProblem[]) => {
-    return pages.length === 1 ? calculateFontScale(validProblems.length, settings.layout) : 1.0;
+    // Only apply scaling if this is a single-page worksheet
+    if (pages.length === 1) {
+      return calculateFontScale(pageProblems.length, settings.layout);
+    }
+    return 1.0; // No scaling for multi-page worksheets
   };
   
   pages.forEach((pageProblems, pageIndex) => {

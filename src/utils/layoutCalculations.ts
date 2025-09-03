@@ -174,9 +174,8 @@ export function paginateProblems(problems: MathProblem[], hasFootnote: boolean =
   let currentPage: MathProblem[] = [];
   let currentPageHeight = 0;
   
-  // Calculate font scale to determine proper content height
-  const fontScale = calculateFontScaleForPagination(problems.length, layout);
-  const maxContentHeight = calculateContentHeight(hasFootnote, fontScale);
+  // Use normal font scale for pagination - don't apply scaling during pagination
+  const maxContentHeight = calculateContentHeight(hasFootnote, 1.0);
 
   if (layout === 'two-column') {
     // For two-column layout, problems are arranged in pairs
@@ -185,7 +184,7 @@ export function paginateProblems(problems: MathProblem[], hasFootnote: boolean =
     let rightColumnY = 0;
     
     problems.forEach((problem) => {
-      const problemHeight = calculateProblemHeight(problem, layout);
+      const problemHeight = calculateProblemHeight(problem, 'single-column'); // Use base height for pagination
       const isLeftColumn = currentPage.length % 2 === 0;
       
       if (isLeftColumn) {
@@ -217,7 +216,7 @@ export function paginateProblems(problems: MathProblem[], hasFootnote: boolean =
   } else {
     // Original single-column logic
     problems.forEach((problem) => {
-      const problemHeight = calculateProblemHeight(problem, layout);
+      const problemHeight = calculateProblemHeight(problem, 'single-column'); // Use base height for pagination
       
       // Check if adding this problem would exceed page height
       if (currentPageHeight + problemHeight > maxContentHeight && currentPage.length > 0) {
