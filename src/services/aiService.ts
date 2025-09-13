@@ -124,15 +124,25 @@ export class AIService {
       // Validate and clean up the problems
       const validatedProblems = this.validateAndCleanProblems(parsedResponse.problems);
       
+      // Calculate breakdown in single pass instead of 4 separate filter operations
+      const breakdown = {
+        basicEquations: 0,
+        multipleChoice: 0,
+        wordProblems: 0,
+        fillBlanks: 0,
+      };
+      
+      validatedProblems.forEach(problem => {
+        if (problem.type === 'basic-equation') breakdown.basicEquations++;
+        else if (problem.type === 'multiple-choice') breakdown.multipleChoice++;
+        else if (problem.type === 'word-problem') breakdown.wordProblems++;
+        else if (problem.type === 'fill-blanks') breakdown.fillBlanks++;
+      });
+      
       return {
         problems: validatedProblems,
         totalGenerated: validatedProblems.length,
-        breakdown: {
-          basicEquations: validatedProblems.filter(p => p.type === 'basic-equation').length,
-          multipleChoice: validatedProblems.filter(p => p.type === 'multiple-choice').length,
-          wordProblems: validatedProblems.filter(p => p.type === 'word-problem').length,
-          fillBlanks: validatedProblems.filter(p => p.type === 'fill-blanks').length,
-        }
+        breakdown
       };
       
     } catch (error) {
