@@ -96,7 +96,8 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
       
       // Circle for multiple choice option - match single column radius and alignment
       pdf.circle(contentX + 0.1 * fontScale, currentY - 0.05 * fontScale, 0.08 * fontScale, 'S');
-      pdf.text(`${letter}) ${option}`, contentX + 0.25 * fontScale, currentY);
+      pdf.text(`${letter})`, contentX + 0.25 * fontScale, currentY);
+      pdf.text(option, contentX + 0.55 * fontScale, currentY);
       currentY += 0.2 * fontScale; // Scale spacing
     });
     
@@ -376,8 +377,8 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
             const circleX = questionStartX + 0.1 * fontScale;
             const circleY = currentY - 0.05 * fontScale;
             pdf.circle(circleX, circleY, 0.08 * fontScale, 'S');
-            pdf.text(`${letter})`, questionStartX + 0.2 * fontScale, currentY);
-            pdf.text(option, questionStartX + 0.5 * fontScale, currentY);
+            pdf.text(`${letter})`, questionStartX + 0.25 * fontScale, currentY);
+            pdf.text(option, questionStartX + 0.55 * fontScale, currentY);
             currentY += SPACING.multipleChoiceOptionHeight * fontScale;
           });
           
