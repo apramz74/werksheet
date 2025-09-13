@@ -4,7 +4,7 @@ import { MathProblem } from '../types';
 export const PAGE_DIMENSIONS = {
   width: 8.5,
   height: 11,
-  margin: 0.75,
+  margin: 1.0,
 } as const;
 
 // Convert inches to pixels for preview (assuming 96 DPI for web display)
