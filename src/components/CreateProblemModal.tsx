@@ -1,17 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { MathProblem } from '../types';
+import { aiService, GenerationResponse } from '../services/aiService';
 
 interface CreateProblemModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (problemType: string) => void;
+  onAiProblemsGenerated: (problems: MathProblem[]) => void;
 }
 
 const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
   isOpen,
   onClose,
-  onCreate
+  onCreate,
+  onAiProblemsGenerated
 }) => {
   const [selectedType, setSelectedType] = useState<string>('basic-equation');
+  const [activeSection, setActiveSection] = useState<'ai' | 'manual'>('ai');
+  const [description, setDescription] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generationResult, setGenerationResult] = useState<GenerationResponse | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,6 +82,58 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
     onCreate(selectedType);
   };
 
+  const handleGenerate = async () => {
+    if (!description.trim()) {
+      setError('Please describe the problems you want to generate');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setGenerationResult(null);
+
+    try {
+      const result = await aiService.generateProblems({ description: description.trim() });
+      setGenerationResult(result);
+      
+      if (result.problems.length === 0) {
+        setError('No valid problems were generated. Please try a different description.');
+        return;
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate problems');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleAddAiProblems = () => {
+    if (generationResult?.problems) {
+      onAiProblemsGenerated(generationResult.problems);
+      handleClose();
+    }
+  };
+
+  const handleClose = () => {
+    setDescription('');
+    setError(null);
+    setGenerationResult(null);
+    setIsGenerating(false);
+    setActiveSection('ai');
+    onClose();
+  };
+
+  const examplePrompts = [
+    "20 addition problems where the sum is 15",
+    "10 multiple choice questions about multiplication tables 1-5", 
+    "15 subtraction problems using numbers 1-20",
+    "5 basic division problems and 5 word problems about fractions",
+    "10 word problems about money and shopping",
+    "8 word problems involving animals and counting",
+    "12 fill-in-the-blank problems with addition and subtraction"
+  ];
+
   if (!isOpen) return null;
 
   return (
@@ -114,10 +175,10 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
             fontWeight: '600',
             color: '#1a202c'
           }}>
-            Create problem
+            Add problems
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               background: 'none',
               border: 'none',
@@ -143,175 +204,434 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
           </button>
         </div>
 
-        {/* Subtitle */}
-        <p style={{
-          margin: '0 0 24px 0',
-          fontSize: '14px',
-          color: '#4a5568'
-        }}>
-          Choose the type:
-        </p>
-
-        {/* Problem Type Grid */}
+        {/* AI Generation Section */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '16px',
-          marginBottom: '24px'
+          border: activeSection === 'ai' ? '2px solid #3182ce' : '1px solid #e2e8f0',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          overflow: 'hidden'
         }}>
-          {problemTypes.map((type) => (
-            <div
-              key={type.id}
-              onClick={() => type.available && setSelectedType(type.id)}
-              style={{
-                border: selectedType === type.id ? '2px solid #3182ce' : '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '16px',
-                cursor: type.available ? 'pointer' : 'not-allowed',
-                backgroundColor: selectedType === type.id ? '#f0f8ff' : 'white',
-                opacity: type.available ? 1 : 0.5,
-                transition: 'all 0.2s ease',
-                position: 'relative' as const
-              }}
-              onMouseEnter={(e) => {
-                if (type.available && selectedType !== type.id) {
-                  e.currentTarget.style.borderColor = '#cbd5e0';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (type.available && selectedType !== type.id) {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                }
-              }}
-            >
-              {/* Selection indicator */}
-              {selectedType === type.id && (
-                <div style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3182ce',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
-                  ✓
-                </div>
-              )}
-
-              {/* Coming soon badge */}
-              {!type.available && (
-                <div style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  backgroundColor: '#fed7d7',
-                  color: '#c53030',
-                  fontSize: '10px',
-                  fontWeight: '500',
-                  padding: '2px 6px',
-                  borderRadius: '4px'
-                }}>
-                  Coming Soon
-                </div>
-              )}
-
-              <h3 style={{
-                margin: '0 0 8px 0',
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#1a202c'
-              }}>
-                {type.title}
-              </h3>
-              
-              <p style={{
-                margin: '0 0 12px 0',
-                fontSize: '14px',
-                color: '#4a5568',
-                lineHeight: '1.4'
-              }}>
-                {type.description}
-              </p>
-              
+          {/* AI Section Header */}
+          <div
+            onClick={() => setActiveSection('ai')}
+            style={{
+              padding: '16px',
+              backgroundColor: activeSection === 'ai' ? '#f0f8ff' : '#f9fafb',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: activeSection === 'ai' ? '1px solid #e2e8f0' : 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                fontSize: '12px',
-                color: '#718096',
-                fontFamily: 'monospace',
-                backgroundColor: '#f7fafc',
-                padding: '8px',
-                borderRadius: '4px',
-                fontStyle: 'italic'
+                width: '32px',
+                height: '32px',
+                backgroundColor: '#dbeafe',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px'
               }}>
-                {type.example}
+                🤖
+              </div>
+              <div>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#1a202c'
+                }}>
+                  Generate with AI
+                </h3>
+                <p style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  color: '#64748b'
+                }}>
+                  Describe what you want in plain English
+                </p>
               </div>
             </div>
-          ))}
+            <div style={{
+              fontSize: '12px',
+              color: activeSection === 'ai' ? '#3182ce' : '#64748b',
+              transform: activeSection === 'ai' ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s'
+            }}>
+              ▼
+            </div>
+          </div>
+
+          {/* AI Section Content */}
+          {activeSection === 'ai' && (
+            <div style={{ padding: '20px' }}>
+              {!generationResult ? (
+                <>
+                  {/* Description Input */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="e.g., 20 addition problems where the sum is always 15"
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '6px',
+                        padding: '12px',
+                        fontSize: '14px',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#3b82f6';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#e5e7eb';
+                      }}
+                    />
+                  </div>
+
+                  {/* Example Prompts */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      color: '#6b7280',
+                      marginBottom: '8px'
+                    }}>
+                      Try these examples:
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {examplePrompts.slice(0, 3).map((prompt, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setDescription(prompt)}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: '#f9fafb',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            color: '#4b5563',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f3f4f6';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f9fafb';
+                          }}
+                        >
+                          "{prompt}"
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <div style={{
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '6px',
+                      padding: '10px',
+                      marginBottom: '16px',
+                      color: '#dc2626',
+                      fontSize: '12px'
+                    }}>
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Generate Button */}
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !description.trim()}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: isGenerating || !description.trim() ? '#9ca3af' : '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: isGenerating || !description.trim() ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {isGenerating && (
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTop: '2px solid white',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                    )}
+                    {isGenerating ? 'Generating...' : 'Generate problems'}
+                  </button>
+                </>
+              ) : (
+                /* Generation Results */
+                <>
+                  <div style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    marginBottom: '16px'
+                  }}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#15803d',
+                      margin: '0 0 6px 0'
+                    }}>
+                      ✅ Generated {generationResult.totalGenerated} problems
+                    </h4>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#166534',
+                      display: 'flex',
+                      gap: '16px'
+                    }}>
+                      <span>• {generationResult.breakdown.basicEquations} equations</span>
+                      <span>• {generationResult.breakdown.multipleChoice} multiple choice</span>
+                      <span>• {generationResult.breakdown.wordProblems} word problems</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => setGenerationResult(null)}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        backgroundColor: '#f9fafb',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Try again
+                    </button>
+                    <button
+                      onClick={handleAddAiProblems}
+                      style={{
+                        flex: 2,
+                        padding: '10px',
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Add to worksheet
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Actions */}
+        {/* Manual Creation Section */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '12px',
-          paddingTop: '16px',
-          borderTop: '1px solid #e2e8f0'
+          border: activeSection === 'manual' ? '2px solid #3182ce' : '1px solid #e2e8f0',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          overflow: 'hidden'
         }}>
-          <button
-            onClick={onClose}
+          {/* Manual Section Header */}
+          <div
+            onClick={() => setActiveSection('manual')}
             style={{
-              padding: '8px 16px',
-              backgroundColor: 'transparent',
-              color: '#4a5568',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
+              padding: '16px',
+              backgroundColor: activeSection === 'manual' ? '#f0f8ff' : '#f9fafb',
               cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f7fafc';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: activeSection === 'manual' ? '1px solid #e2e8f0' : 'none'
             }}
           >
-            Cancel
-          </button>
-          
-          <button
-            onClick={handleCreate}
-            disabled={!problemTypes.find(t => t.id === selectedType)?.available}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: problemTypes.find(t => t.id === selectedType)?.available ? '#3182ce' : '#a0aec0',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: problemTypes.find(t => t.id === selectedType)?.available ? 'pointer' : 'not-allowed',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              if (problemTypes.find(t => t.id === selectedType)?.available) {
-                e.currentTarget.style.backgroundColor = '#2c5aa0';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (problemTypes.find(t => t.id === selectedType)?.available) {
-                e.currentTarget.style.backgroundColor = '#3182ce';
-              }
-            }}
-          >
-            Create
-          </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                backgroundColor: '#f3f4f6',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px'
+              }}>
+                ✏️
+              </div>
+              <div>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#1a202c'
+                }}>
+                  Create manually
+                </h3>
+                <p style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  color: '#64748b'
+                }}>
+                  Choose a problem type to create yourself
+                </p>
+              </div>
+            </div>
+            <div style={{
+              fontSize: '12px',
+              color: activeSection === 'manual' ? '#3182ce' : '#64748b',
+              transform: activeSection === 'manual' ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s'
+            }}>
+              ▼
+            </div>
+          </div>
+
+          {/* Manual Section Content */}
+          {activeSection === 'manual' && (
+            <div style={{ padding: '20px' }}>
+              <p style={{
+                margin: '0 0 16px 0',
+                fontSize: '14px',
+                color: '#4a5568'
+              }}>
+                Choose the type:
+              </p>
+
+              {/* Problem Type Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
+                {problemTypes.map((type) => (
+                  <div
+                    key={type.id}
+                    onClick={() => type.available && setSelectedType(type.id)}
+                    style={{
+                      border: selectedType === type.id ? '2px solid #3182ce' : '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      cursor: type.available ? 'pointer' : 'not-allowed',
+                      backgroundColor: selectedType === type.id ? '#f0f8ff' : 'white',
+                      opacity: type.available ? 1 : 0.5,
+                      transition: 'all 0.2s ease',
+                      position: 'relative' as const
+                    }}
+                  >
+                    {/* Selection indicator */}
+                    {selectedType === type.id && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '6px',
+                        right: '6px',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: '#3182ce',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold'
+                      }}>
+                        ✓
+                      </div>
+                    )}
+
+                    <h4 style={{
+                      margin: '0 0 6px 0',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#1a202c'
+                    }}>
+                      {type.title}
+                    </h4>
+                    
+                    <p style={{
+                      margin: '0 0 8px 0',
+                      fontSize: '12px',
+                      color: '#4a5568',
+                      lineHeight: '1.3'
+                    }}>
+                      {type.description}
+                    </p>
+                    
+                    <div style={{
+                      fontSize: '10px',
+                      color: '#718096',
+                      fontFamily: 'monospace',
+                      backgroundColor: '#f7fafc',
+                      padding: '6px',
+                      borderRadius: '3px',
+                      fontStyle: 'italic'
+                    }}>
+                      {type.example}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={handleCreate}
+                disabled={!problemTypes.find(t => t.id === selectedType)?.available}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: problemTypes.find(t => t.id === selectedType)?.available ? '#3182ce' : '#a0aec0',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: problemTypes.find(t => t.id === selectedType)?.available ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Create problem
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* CSS Animation for spinner */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `
+        }} />
       </div>
     </div>
   );

@@ -445,6 +445,7 @@ function App() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateProblem}
+        onAiProblemsGenerated={handleAiProblemsGenerated}
       />
 
       {/* AI Generation Modal */}
