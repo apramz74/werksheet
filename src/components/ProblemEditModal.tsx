@@ -464,8 +464,8 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
             >
               <option value="+">+</option>
               <option value="-">-</option>
-              <option value="*">*</option>
-              <option value="/">/</option>
+              <option value="×">×</option>
+              <option value="÷">÷</option>
             </select>
 
             {/* Right Operand */}
@@ -761,8 +761,8 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
             >
               <option value="+">+</option>
               <option value="-">-</option>
-              <option value="*">*</option>
-              <option value="/">/</option>
+              <option value="×">×</option>
+              <option value="÷">÷</option>
             </select>
 
             {/* Right operand */}

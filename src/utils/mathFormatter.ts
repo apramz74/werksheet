@@ -1,12 +1,12 @@
 import { MathProblem } from '../types';
 
 export class MathFormatter {
-  private static readonly OPERATORS = ['+', '-', '*', '/'];
+  private static readonly OPERATORS = ['+', '-', '×', '÷'];
   private static readonly OPERATOR_MAP: { [key: string]: string } = {
-    'x': '*',
-    'X': '*',
-    '×': '*',
-    '÷': '/'
+    'x': '×',
+    'X': '×',
+    '*': '×',
+    '/': '÷'
   };
 
   public static normalizeOperator(operator: string): string {
@@ -131,10 +131,12 @@ export class MathFormatter {
       let operator = '';
       let operatorIndex = -1;
       
-      for (const op of this.OPERATORS) {
+      // Check for all possible operators (including legacy ones)
+      const allOperators = [...this.OPERATORS, '*', '/'];
+      for (const op of allOperators) {
         const idx = leftSide.indexOf(op);
         if (idx > 0) { // Operator shouldn't be at the start
-          operator = op;
+          operator = this.normalizeOperator(op);
           operatorIndex = idx;
           break;
         }

@@ -149,12 +149,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   const handleFieldKeyDown = (e: React.KeyboardEvent, field: 'left' | 'right') => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (field === 'left') {
-        setEditingField('operator');
-        setTimeout(() => operatorSelectRef.current?.focus(), 0);
-      } else {
-        handleFinishEdit();
-      }
+      handleFinishEdit();
     } else if (e.key === 'Tab') {
       e.preventDefault();
       if (field === 'left') {
@@ -176,12 +171,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   const handleFillBlanksKeyDown = (e: React.KeyboardEvent, field: 'right' | 'result') => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (field === 'right') {
-        setEditingField('result');
-        setTimeout(() => resultInputRef.current?.focus(), 0);
-      } else {
-        handleFinishEdit();
-      }
+      handleFinishEdit();
     } else if (e.key === 'Tab') {
       e.preventDefault();
       if (field === 'right') {
@@ -448,7 +438,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                   onChange={(e) => setQuestion(e.target.value)}
                   onFocus={() => setEditingField('question')}
                   onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleFinishEdit();
+                    } else if (e.key === 'Escape') {
                       setIsEditing(false);
                       setEditingField(null);
                       setQuestion(problem.question || '');
@@ -520,7 +513,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                         onChange={(e) => handleOptionChange(index, e.target.value)}
                         onFocus={() => setEditingField(index)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleFinishEdit();
+                          } else if (e.key === 'Escape') {
                             setIsEditing(false);
                             setEditingField(null);
                             setQuestion(problem.question || '');
@@ -601,7 +597,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                 onChange={(e) => setProblemText(e.target.value)}
                 onFocus={() => setEditingField('problemText')}
                 onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    handleFinishEdit();
+                  } else if (e.key === 'Escape') {
                     setIsEditing(false);
                     setEditingField(null);
                     setProblemText(problem.problemText || '');
@@ -668,7 +667,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                 onChange={(e) => handleOperatorChange(e.target.value)}
                 onFocus={() => setEditingField('operator')}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === 'Tab') {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleFinishEdit();
+                  } else if (e.key === 'Tab') {
                     e.preventDefault();
                     setEditingField('right');
                     if (rightInputRef.current) {
@@ -697,8 +699,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
               >
                 <option value="+">+</option>
                 <option value="-">-</option>
-                <option value="*">*</option>
-                <option value="/">/</option>
+                <option value="×">×</option>
+                <option value="÷">÷</option>
               </select>
 
               {/* Right operand */}
@@ -799,7 +801,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                 onChange={(e) => handleOperatorChange(e.target.value)}
                 onFocus={() => setEditingField('operator')}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === 'Tab') {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleFinishEdit();
+                  } else if (e.key === 'Tab') {
                     e.preventDefault();
                     setEditingField('right');
                     if (rightInputRef.current) {
@@ -822,8 +827,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
               >
                 <option value="+">+</option>
                 <option value="-">-</option>
-                <option value="*">*</option>
-                <option value="/">/</option>
+                <option value="×">×</option>
+                <option value="÷">÷</option>
               </select>
 
               {/* Right operand */}
@@ -874,12 +879,12 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
             color: '#666' 
           }}>
             {problem.type === 'multiple-choice' 
-              ? 'Click fields to edit • Esc: Cancel'
+              ? 'Enter: Save • Tab: Next field • Esc: Cancel'
               : problem.type === 'word-problem'
-                ? 'Type your word problem • Esc: Cancel'
+                ? 'Ctrl+Enter: Save • Esc: Cancel'
                 : problem.type === 'fill-blanks'
-                  ? 'Enter/Tab: Next field • Start with operator • Esc: Cancel'
-                  : 'Enter/Tab: Next field • Type +, -, *, / for operators • Esc: Cancel'
+                  ? 'Enter: Save • Tab: Next field • Esc: Cancel'
+                  : 'Enter: Save • Tab: Next field • Esc: Cancel'
             }
           </div>
 
