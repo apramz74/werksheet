@@ -157,7 +157,7 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "16px",
+          gap: "4px",
         }}
       >
         <svg 
@@ -171,20 +171,19 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
           strokeLinejoin="round"
           style={{ marginBottom: "8px" }}
         >
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14,2 14,8 20,8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10,9 9,9 8,9"></polyline>
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+          <line x1="9" y1="9" x2="9.01" y2="9"></line>
+          <line x1="15" y1="9" x2="15.01" y2="9"></line>
         </svg>
         <h3 style={{ 
-          margin: "0", 
-          fontSize: "20px",
+          margin: "0 0 1px 0", 
+          fontSize: "15px",
           fontWeight: "600",
           color: "#1f2937",
           fontFamily: "system-ui, -apple-system, sans-serif",
         }}>
-          Create your first problems
+          No preview yet
         </h3>
         <p style={{ 
           margin: "0",
@@ -194,7 +193,7 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
           maxWidth: "250px",
           fontFamily: "system-ui, -apple-system, sans-serif",
         }}>
-          Add problems to see your worksheet preview
+          Add problems to see preview
         </p>
       </div>
     );

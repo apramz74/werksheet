@@ -34,7 +34,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onCreateProblem, onStartAiGener
         </div>
         
         <h3 style={{
-          fontSize: '20px',
+          fontSize: '16px',
           fontWeight: '600',
           color: '#333',
           margin: '0'
@@ -50,7 +50,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onCreateProblem, onStartAiGener
         maxWidth: '400px',
         lineHeight: '1.5'
       }}>
-        Start building your math worksheet by generating problems with AI or creating them manually.
+        Add problems to see preview
       </p>
       
       <div style={{
