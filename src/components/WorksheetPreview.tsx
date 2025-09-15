@@ -152,16 +152,50 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
     return (
       <div
         style={{
-          padding: "40px",
+          padding: "60px 40px",
           textAlign: "center",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          border: "2px dashed #ddd",
-          color: "#666",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "16px",
         }}
       >
-        <h3 style={{ margin: "0 0 10px 0" }}>Worksheet Preview</h3>
-        <p style={{ margin: "0" }}>Add some problems to see the preview</p>
+        <svg 
+          width="48" 
+          height="48" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="#9ca3af" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          style={{ marginBottom: "8px" }}
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10,9 9,9 8,9"></polyline>
+        </svg>
+        <h3 style={{ 
+          margin: "0", 
+          fontSize: "20px",
+          fontWeight: "600",
+          color: "#1f2937",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        }}>
+          Create your first problems
+        </h3>
+        <p style={{ 
+          margin: "0",
+          fontSize: "15px",
+          color: "#6b7280",
+          lineHeight: "1.5",
+          maxWidth: "250px",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        }}>
+          Add problems to see your worksheet preview
+        </p>
       </div>
     );
   }
@@ -176,9 +210,6 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
         backgroundColor: "white",
         fontFamily: "Helvetica, Arial, sans-serif",
         margin: "0 auto",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-        borderRadius: "12px",
-        overflow: "hidden",
         position: "relative",
       }}
     >
@@ -188,7 +219,7 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
           width: "100%",
           overflowX: "auto",
           display: "flex",
-          justifyContent: "flex-start",
+          justifyContent: "center",
           padding: "20px 0",
         }}
       >

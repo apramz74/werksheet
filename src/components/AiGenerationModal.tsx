@@ -111,9 +111,22 @@ const AiGenerationModal: React.FC<AiGenerationModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px'
             }}>
-              🤖
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="#3b82f6" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+                <path d="M12 7h.01"/>
+                <path d="M12 14h.01"/>
+              </svg>
             </div>
             <h2 style={{ 
               fontSize: '24px', 
@@ -319,28 +332,10 @@ const AiGenerationModal: React.FC<AiGenerationModalProps> = ({
                 fontSize: '16px',
                 fontWeight: '600',
                 color: '#15803d',
-                margin: '0 0 8px 0'
+                margin: '0'
               }}>
                 ✅ Generated {generationResult.totalGenerated} problems
               </h3>
-              <div style={{
-                fontSize: '14px',
-                color: '#166534',
-                lineHeight: '1.5'
-              }}>
-                <p style={{ margin: '0 0 4px 0' }}>
-                  • {generationResult.breakdown.basicEquations} basic equations
-                </p>
-                <p style={{ margin: '0 0 4px 0' }}>
-                  • {generationResult.breakdown.multipleChoice} multiple choice questions
-                </p>
-                <p style={{ margin: '0 0 4px 0' }}>
-                  • {generationResult.breakdown.wordProblems} word problems
-                </p>
-                <p style={{ margin: '0' }}>
-                  • {generationResult.breakdown.fillBlanks} fill-in-the-blank problems
-                </p>
-              </div>
             </div>
 
             {/* Preview of first few problems */}

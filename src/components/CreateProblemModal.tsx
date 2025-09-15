@@ -7,16 +7,18 @@ interface CreateProblemModalProps {
   onClose: () => void;
   onCreate: (problemType: string) => void;
   onAiProblemsGenerated: (problems: MathProblem[]) => void;
+  defaultSection?: 'ai' | 'manual';
 }
 
 const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
   isOpen,
   onClose,
   onCreate,
-  onAiProblemsGenerated
+  onAiProblemsGenerated,
+  defaultSection = 'ai'
 }) => {
   const [selectedType, setSelectedType] = useState<string>('basic-equation');
-  const [activeSection, setActiveSection] = useState<'ai' | 'manual'>('ai');
+  const [activeSection, setActiveSection] = useState<'ai' | 'manual'>(defaultSection);
   const [description, setDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +48,13 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, onClose]);
+
+  // Set active section when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveSection(defaultSection);
+    }
+  }, [isOpen, defaultSection]);
 
   const problemTypes = [
     {
@@ -120,7 +129,7 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
     setError(null);
     setGenerationResult(null);
     setIsGenerating(false);
-    setActiveSection('ai');
+    setActiveSection(defaultSection);
     onClose();
   };
 
@@ -232,10 +241,23 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px'
+                justifyContent: 'center'
               }}>
-                🤖
+                <svg 
+                  width="18" 
+                  height="18" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="#3b82f6" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+                  <path d="M12 7h.01"/>
+                  <path d="M12 14h.01"/>
+                </svg>
               </div>
               <div>
                 <h3 style={{
@@ -483,9 +505,20 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px'
               }}>
-                ✏️
+                <svg 
+                  width="18" 
+                  height="18" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="#6b7280" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
               </div>
               <div>
                 <h3 style={{

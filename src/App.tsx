@@ -24,6 +24,7 @@ function App() {
   const [isExporting, setIsExporting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingAfterIndex, setPendingAfterIndex] = useState<number>(-1);
+  const [createModalDefaultSection, setCreateModalDefaultSection] = useState<'ai' | 'manual'>('ai');
   
   // Navigation state for preview
   const [navigationState, setNavigationState] = useState<{
@@ -73,8 +74,9 @@ function App() {
     });
   };
 
-  const handleShowCreateModal = (afterIndex: number) => {
+  const handleShowCreateModal = (afterIndex: number, defaultSection: 'ai' | 'manual' = 'ai') => {
     setPendingAfterIndex(afterIndex);
+    setCreateModalDefaultSection(defaultSection);
     setShowCreateModal(true);
   };
 
@@ -526,6 +528,7 @@ function App() {
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateProblem}
         onAiProblemsGenerated={handleAiProblemsGenerated}
+        defaultSection={createModalDefaultSection}
       />
 
       {/* AI Generation Modal */}
