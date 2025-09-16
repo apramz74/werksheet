@@ -293,60 +293,71 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
       }
       
     } else if (settings.layout === 'two-column') {
-      // Two Column Layout
+      // Two Column Layout - fill left column first, then right column
       const columnWidth = (pageWidth - 2 * margin - 0.5) / 2; // 0.5 inch gap between columns
       const leftColumnX = margin;
       const rightColumnX = margin + columnWidth + 0.5;
       
+      // Separate problems into columns - fill left first, then right
+      const twoColumnProblems = pageProblems.filter(p => isTwoColumnSuitable(p));
+      const singleColumnProblems = pageProblems.filter(p => !isTwoColumnSuitable(p));
+      
+      const halfCount = Math.ceil(twoColumnProblems.length / 2);
+      const leftColumnProblems = twoColumnProblems.slice(0, halfCount);
+      const rightColumnProblems = twoColumnProblems.slice(halfCount);
+      
       let leftColumnY = currentY;
       let rightColumnY = currentY;
       
-      pageProblems.forEach((problem, pageRelativeIndex) => {
-        const globalIndex = pages.slice(0, pageIndex).reduce((sum, page) => sum + page.length, 0) + pageRelativeIndex;
-        const isLeftColumn = pageRelativeIndex % 2 === 0;
+      // Render left column problems
+      leftColumnProblems.forEach((problem, leftIndex) => {
+        const globalIndex = pages.slice(0, pageIndex).reduce((sum, page) => sum + page.length, 0) + 
+                           pageProblems.indexOf(problem);
         
-        if (isTwoColumnSuitable(problem)) {
-          const x = isLeftColumn ? leftColumnX : rightColumnX;
-          const y = isLeftColumn ? leftColumnY : rightColumnY;
+        const problemHeight = renderTwoColumnProblemPDF(pdf, problem, globalIndex, leftColumnX, leftColumnY, fontScale);
+        leftColumnY += problemHeight + 0.15 * fontScale;
+      });
+      
+      // Render right column problems
+      rightColumnProblems.forEach((problem, rightIndex) => {
+        const globalIndex = pages.slice(0, pageIndex).reduce((sum, page) => sum + page.length, 0) + 
+                           pageProblems.indexOf(problem);
+        
+        const problemHeight = renderTwoColumnProblemPDF(pdf, problem, globalIndex, rightColumnX, rightColumnY, fontScale);
+        rightColumnY += problemHeight + 0.15 * fontScale;
+      });
+      
+      // Handle single column problems (word problems) after two-column problems
+      const fallbackY = Math.max(leftColumnY, rightColumnY) + 0.2;
+      leftColumnY = fallbackY;
+      rightColumnY = fallbackY;
+      
+      singleColumnProblems.forEach((problem) => {
+        const globalIndex = pages.slice(0, pageIndex).reduce((sum, page) => sum + page.length, 0) + 
+                           pageProblems.indexOf(problem);
+        
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${globalIndex + 1}.`, margin, leftColumnY);
+        
+        if (problem.type === 'word-problem') {
+          pdf.setFont('helvetica', 'normal');
+          const problemText = problem.problemText || '';
+          const maxWidth = pageWidth - margin * 2 - 0.3;
+          const lines = pdf.splitTextToSize(problemText, maxWidth);
           
-          const problemHeight = renderTwoColumnProblemPDF(pdf, problem, globalIndex, x, y, fontScale);
+          lines.forEach((line: string, lineIndex: number) => {
+            pdf.text(line, margin + 0.3, leftColumnY + (lineIndex * 0.2));
+          });
           
-          if (isLeftColumn) {
-            leftColumnY += problemHeight + 0.15 * fontScale;
-          } else {
-            rightColumnY += problemHeight + 0.15 * fontScale;
-          }
+          const finalY = leftColumnY + lines.length * 0.2 + 0.2;
+          const lineStartX = margin + 0.3;
+          const lineEndX = lineStartX + 2;
+          pdf.setLineWidth(0.005);
+          pdf.line(lineStartX, finalY + 0.02, lineEndX, finalY + 0.02);
           
-        } else {
-          // Fall back to single column for complex problems (word problems)
-          // Use the higher of the two columns
-          const fallbackY = Math.max(leftColumnY, rightColumnY) + 0.2;
-          leftColumnY = fallbackY;
-          rightColumnY = fallbackY;
-          
-          pdf.setFontSize(14);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(`${globalIndex + 1}.`, margin, fallbackY);
-          
-          if (problem.type === 'word-problem') {
-            pdf.setFont('helvetica', 'normal');
-            const problemText = problem.problemText || '';
-            const maxWidth = pageWidth - margin * 2 - 0.3;
-            const lines = pdf.splitTextToSize(problemText, maxWidth);
-            
-            lines.forEach((line: string, lineIndex: number) => {
-              pdf.text(line, margin + 0.3, fallbackY + (lineIndex * 0.2));
-            });
-            
-            const finalY = fallbackY + lines.length * 0.2 + 0.2;
-            const lineStartX = margin + 0.3;
-            const lineEndX = lineStartX + 2;
-            pdf.setLineWidth(0.005);
-            pdf.line(lineStartX, finalY + 0.02, lineEndX, finalY + 0.02);
-            
-            leftColumnY = finalY + SPACING.basicEquationHeight + SPACING.problemSpacing;
-            rightColumnY = leftColumnY;
-          }
+          leftColumnY = finalY + SPACING.basicEquationHeight + SPACING.problemSpacing;
+          rightColumnY = leftColumnY;
         }
       });
       

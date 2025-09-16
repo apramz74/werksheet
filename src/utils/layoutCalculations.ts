@@ -103,10 +103,12 @@ export function calculateProblemHeight(problem: MathProblem, layout: string = 's
  */
 function calculateTwoColumnProblemHeight(problem: MathProblem): number {
   if (problem.type === 'multiple-choice') {
-    // Question height + options height + extra spacing
+    // Match PDF rendering: 0.25 + (N * 0.2) + 0.1 (before font scaling)
+    // Note: The 0.15 spacing is added separately in pagination logic
     return 0.25 + (problem.options?.length || 0) * 0.2 + 0.1;
   } else if (problem.type === 'fill-blanks' || problem.type === 'basic-equation') {
-    // Much more compact in two-column
+    // Match PDF rendering: returns 0.25 (before font scaling)
+    // Note: The 0.15 spacing is added separately in pagination logic
     return 0.25;
   } else {
     // Word problems fall back to single column in two-column layout
@@ -142,7 +144,7 @@ export function calculateContentHeight(hasFootnote: boolean = false, fontScale: 
 }
 
 /**
- * Calculate font scale for a given number of problems
+ * Calculate font scale for a given number of problems (matching PDF generation logic)
  */
 function calculateFontScaleForPagination(problemCount: number, layout: string): number {
   // Only apply scaling for single pages with few problems
@@ -172,53 +174,74 @@ function calculateFontScaleForPagination(problemCount: number, layout: string): 
  * Split problems into pages based on height calculations
  */
 export function paginateProblems(problems: MathProblem[], hasFootnote: boolean = false, layout: string = 'single-column'): MathProblem[][] {
+  // Two-pass pagination to handle font scaling correctly
+  
+  // First pass: Quick check with normal font scale to see if it would be single page
+  const quickPages = paginateWithFontScale(problems, hasFootnote, layout, 1.0);
+  
+  // If it would be a single page, recalculate with appropriate font scaling
+  if (quickPages.length === 1) {
+    const fontScale = calculateFontScaleForPagination(problems.length, layout);
+    if (fontScale !== 1.0) {
+      return paginateWithFontScale(problems, hasFootnote, layout, fontScale);
+    }
+  }
+  
+  // Otherwise, use the quick pagination result (multi-page, no scaling)
+  return quickPages;
+}
+
+/**
+ * Internal pagination function with specific font scale
+ */
+function paginateWithFontScale(problems: MathProblem[], hasFootnote: boolean, layout: string, fontScale: number): MathProblem[][] {
   const pages: MathProblem[][] = [];
   let currentPage: MathProblem[] = [];
   let currentPageHeight = 0;
   
-  // Use normal font scale for pagination - don't apply scaling during pagination
-  const maxContentHeight = calculateContentHeight(hasFootnote, 1.0);
+  const maxContentHeight = calculateContentHeight(hasFootnote, fontScale);
 
   if (layout === 'two-column') {
-    // For two-column layout, problems are arranged in pairs
-    // Each pair takes roughly the height of the taller problem plus spacing
+    // For two-column layout, alternate between columns for optimal space usage
     let leftColumnY = 0;
     let rightColumnY = 0;
     
     problems.forEach((problem) => {
-      const problemHeight = calculateProblemHeight(problem, 'single-column'); // Use base height for pagination
+      const baseProblemHeight = calculateProblemHeight(problem, 'two-column');
+      const problemHeight = baseProblemHeight * fontScale;
+      const spacing = 0.15 * fontScale; // Scale spacing too
+      
+      // Alternate between columns for pagination (this maximizes space usage)
       const isLeftColumn = currentPage.length % 2 === 0;
       
-      if (isLeftColumn) {
-        // Check if we can fit this problem in left column
-        if (leftColumnY + problemHeight > maxContentHeight && currentPage.length > 0) {
-          // Start new page
-          pages.push(currentPage);
-          currentPage = [problem];
-          leftColumnY = problemHeight + 0.15; // Add spacing
-          rightColumnY = 0;
-        } else {
-          currentPage.push(problem);
-          leftColumnY += problemHeight + 0.15;
-        }
+      // Check if this problem would fit on the current page
+      const wouldFitInTargetColumn = isLeftColumn 
+        ? (leftColumnY + problemHeight <= maxContentHeight)
+        : (rightColumnY + problemHeight <= maxContentHeight);
+      
+      // Only start a new page if the current problem won't fit in its target column
+      // AND we have problems on the current page
+      if (!wouldFitInTargetColumn && currentPage.length > 0) {
+        // Start new page
+        pages.push(currentPage);
+        currentPage = [problem];
+        leftColumnY = problemHeight + spacing;
+        rightColumnY = 0;
       } else {
-        // Right column - check if we can fit
-        if (rightColumnY + problemHeight > maxContentHeight && currentPage.length > 0) {
-          // Start new page, put this problem in left column of new page
-          pages.push(currentPage);
-          currentPage = [problem];
-          leftColumnY = problemHeight + 0.15;
-          rightColumnY = 0;
+        // Add to current page
+        currentPage.push(problem);
+        if (isLeftColumn) {
+          leftColumnY += problemHeight + spacing;
         } else {
-          currentPage.push(problem);
-          rightColumnY += problemHeight + 0.15;
+          rightColumnY += problemHeight + spacing;
         }
       }
     });
   } else {
-    // Original single-column logic
+    // Single-column logic with font scaling
     problems.forEach((problem) => {
-      const problemHeight = calculateProblemHeight(problem, 'single-column'); // Use base height for pagination
+      const baseProblemHeight = calculateProblemHeight(problem, 'single-column');
+      const problemHeight = baseProblemHeight * fontScale;
       
       // Check if adding this problem would exceed page height
       if (currentPageHeight + problemHeight > maxContentHeight && currentPage.length > 0) {

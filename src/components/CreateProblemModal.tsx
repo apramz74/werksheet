@@ -420,20 +420,10 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
                       fontSize: '14px',
                       fontWeight: '600',
                       color: '#15803d',
-                      margin: '0 0 6px 0'
+                      margin: '0'
                     }}>
                       ✅ Generated {generationResult.totalGenerated} problems
                     </h4>
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#166534',
-                      display: 'flex',
-                      gap: '16px'
-                    }}>
-                      <span>• {generationResult.breakdown.basicEquations} equations</span>
-                      <span>• {generationResult.breakdown.multipleChoice} multiple choice</span>
-                      <span>• {generationResult.breakdown.wordProblems} word problems</span>
-                    </div>
                   </div>
 
                   {/* Action Buttons */}
