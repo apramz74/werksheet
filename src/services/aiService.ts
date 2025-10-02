@@ -97,7 +97,7 @@ export class AIService {
 
   constructor() {
     this.genAI = getGeminiAPI();
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   }
 
   async generateProblems(request: GenerationRequest): Promise<GenerationResponse> {
