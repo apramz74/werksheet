@@ -91,16 +91,18 @@ Return a JSON object with this exact structure:
 IMPORTANT RULES:
 - Generate exactly the number of problems requested
 - Ensure math is correct and age-appropriate
-- For basic equations, use simple numbers unless specified otherwise
+- For basic equations, use simple numbers unless specified otherwise (negative numbers are supported)
 - For multiple choice, include one correct answer and three plausible distractors
 - Each problem must have a unique ID (use format: "ai-generated-{timestamp}-{index}")
 - Follow any specific mathematical constraints mentioned in the request
+- Support negative numbers in all problem types (e.g., "-5 + 3", "10 - -2", etc.)
 - If the request is unclear, make reasonable assumptions and explain in the analysis
 
 Examples:
 - "20 addition problems where the sum is 15" → Generate 20 basic-equation problems with various combinations that add to 15
 - "10 multiple choice questions about multiplication tables" → Generate 10 multiple-choice problems testing multiplication
 - "5 subtraction and 5 addition problems using numbers 1-10" → Generate 10 basic-equation problems split evenly
+- "problems with negative numbers" → Generate problems including negative operands like "-5 + 3" or "7 + -2"
 - "10 algebra problems solving for x" → Generate 10 algebra-equation problems with variable x
 - "one-step equations" → Generate algebra-equation problems like "x + 5 = 12"`;
 

@@ -15,7 +15,11 @@ export class MathFormatter {
 
   public static validateNumber(value: string): boolean {
     if (!value.trim()) return false;
-    const num = parseFloat(value);
+    const trimmed = value.trim();
+    // Allow negative numbers by checking if it matches number pattern
+    const numberPattern = /^-?\d*\.?\d+$/;
+    if (!numberPattern.test(trimmed)) return false;
+    const num = parseFloat(trimmed);
     return !isNaN(num) && isFinite(num);
   }
 
@@ -152,7 +156,7 @@ export class MathFormatter {
   // Legacy support for migrating existing data
   public static parseFromLegacyFormat(questionString: string): MathProblem | null {
     try {
-      // Parse something like "5 + 3 = ____" or "5+3=____"
+      // Parse something like "5 + 3 = ____" or "-5+3=____" or "5 + -3 = ____"
       const cleaned = questionString.replace(/\s+/g, ' ').trim();
       const equalsIndex = cleaned.indexOf('=');
       
@@ -160,15 +164,17 @@ export class MathFormatter {
       
       const leftSide = cleaned.substring(0, equalsIndex).trim();
       
-      // Find operator
+      // Find operator - need to handle negative numbers properly
       let operator = '';
       let operatorIndex = -1;
       
       // Check for all possible operators (including legacy ones)
       const allOperators = [...this.OPERATORS, '*', '/'];
       for (const op of allOperators) {
-        const idx = leftSide.indexOf(op);
-        if (idx > 0) { // Operator shouldn't be at the start
+        // Start search from index 1 to allow for negative numbers at the start
+        let searchStart = leftSide.startsWith('-') ? 1 : 0;
+        const idx = leftSide.indexOf(op, searchStart);
+        if (idx > searchStart) { // Operator should be after potential negative sign and at least one digit
           operator = this.normalizeOperator(op);
           operatorIndex = idx;
           break;
