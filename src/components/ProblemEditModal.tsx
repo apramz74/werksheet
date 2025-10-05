@@ -56,6 +56,13 @@ const ProblemEditModal: React.FC<ProblemEditModalProps> = ({
       description: 'Complete the equation',
       example: '__ + 3 = 8',
       available: true
+    },
+    {
+      id: 'algebra-equation',
+      title: 'Algebra Equation',
+      description: 'Solve for the variable',
+      example: 'x + 5 = 12',
+      available: true
     }
   ];
 

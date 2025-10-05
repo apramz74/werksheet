@@ -1,6 +1,6 @@
 export interface MathProblem {
   id: string;
-  type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks';
+  type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' | 'algebra-equation';
   
   // Basic equation fields
   leftOperand?: string;
@@ -16,6 +16,10 @@ export interface MathProblem {
   
   // Fill-blanks fields (__ + rightOperand = result)
   result?: string;
+  
+  // Algebra equation fields
+  equation?: string;
+  variable?: string;
   
   isEditing?: boolean;
 }
@@ -40,6 +44,12 @@ export const formatMathProblem = (problem: MathProblem): string => {
       return 'Fill in the blank...';
     }
     return `____ ${problem.operator} ${problem.rightOperand} = ${problem.result}`;
+  } else if (problem.type === 'algebra-equation') {
+    if (!problem.equation || problem.equation.trim() === '') {
+      return 'Algebra equation...';
+    }
+    const variable = problem.variable || 'x';
+    return `${problem.equation}\n${variable} = ____`;
   } else {
     // Basic equation
     if (!problem.leftOperand || !problem.operator || !problem.rightOperand) {

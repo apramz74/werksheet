@@ -8,6 +8,37 @@ import {
   SPACING_PX,
 } from "../utils/layoutCalculations";
 
+// Helper function to render text with styled variables
+const renderVariableText = (text: string, primaryVariable: string = 'x') => {
+  // Style all common algebra variables, with primary variable taking precedence
+  const allVariables = [primaryVariable, 'x', 'y', 'z', 'n', 'a', 'b', 'c', 't', 'm'];
+  const uniqueVariables = allVariables.filter((v, i, arr) => arr.indexOf(v) === i);
+  
+  // Create regex to match variables both standalone and with coefficients (like 6x, 2y, etc.)
+  const variablePattern = new RegExp(`(\\d*)(${uniqueVariables.join('|')})`, 'g');
+  
+  const parts = text.split(variablePattern);
+  
+  return parts.map((part, index) => {
+    if (uniqueVariables.includes(part)) {
+      return (
+        <span
+          key={index}
+          style={{
+            fontStyle: 'italic',
+            fontFamily: '"Times New Roman", serif',
+            fontWeight: '500',
+            color: '#2563eb'
+          }}
+        >
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
 // Helper function to determine if a problem is suitable for compact layouts
 const isCompactLayoutSuitable = (problem: MathProblem): boolean => {
   return problem.type === 'basic-equation' || problem.type === 'fill-blanks';
@@ -17,7 +48,8 @@ const isCompactLayoutSuitable = (problem: MathProblem): boolean => {
 const isTwoColumnSuitable = (problem: MathProblem): boolean => {
   return problem.type === 'basic-equation' || 
          problem.type === 'fill-blanks' || 
-         problem.type === 'multiple-choice';
+         problem.type === 'multiple-choice' ||
+         problem.type === 'algebra-equation';
 };
 
 // Render problem in compact format (like traditional worksheet)
@@ -34,7 +66,13 @@ const renderCompactProblem = (problem: MathProblem, globalIndex: number) => {
         minHeight: '50px',
         width: '100%'
       }}>
-        <div style={{ marginBottom: '2px', fontWeight: 'normal', fontSize: `${FONT_SIZES.problemText * 0.8}px` }}>
+        <div style={{ 
+          marginBottom: '2px', 
+          fontWeight: 'normal', 
+          fontSize: `${FONT_SIZES.problemText * 0.8}px`,
+          width: '32px',
+          textAlign: 'right'
+        }}>
           {globalIndex + 1})
         </div>
         <div style={{ 
@@ -68,7 +106,13 @@ const renderCompactProblem = (problem: MathProblem, globalIndex: number) => {
         minHeight: '50px',
         width: '100%'
       }}>
-        <div style={{ marginBottom: '2px', fontWeight: 'normal', fontSize: `${FONT_SIZES.problemText * 0.8}px` }}>
+        <div style={{ 
+          marginBottom: '2px', 
+          fontWeight: 'normal', 
+          fontSize: `${FONT_SIZES.problemText * 0.8}px`,
+          width: '32px',
+          textAlign: 'right'
+        }}>
           {globalIndex + 1})
         </div>
         <div style={{ 
@@ -293,6 +337,8 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                             color: "#000",
                             fontFamily: "Helvetica, Arial, sans-serif",
                             flexShrink: 0,
+                            width: '40px',
+                            textAlign: 'right'
                           }}>
                             {globalIndex + 1}.
                           </span>
@@ -355,6 +401,36 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                                   width: `${2 * 96}px`,
                                   height: "16px",
                                 }}></div>
+                              </div>
+                            ) : problem.type === "algebra-equation" ? (
+                              <div>
+                                <div style={{
+                                  fontSize: `${FONT_SIZES.problemText}px`,
+                                  fontWeight: "normal",
+                                  color: "#000",
+                                  fontFamily: "Helvetica, Arial, sans-serif",
+                                  lineHeight: "1.4",
+                                  marginBottom: `${0.15 * 96}px`,
+                                }}>
+                                  {renderVariableText(problem.equation || '', problem.variable)}
+                                </div>
+                                <div style={{
+                                  fontSize: `${FONT_SIZES.problemText}px`,
+                                  fontWeight: "normal",
+                                  color: "#000",
+                                  fontFamily: "Helvetica, Arial, sans-serif",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}>
+                                  {renderVariableText(problem.variable || 'x', problem.variable)}
+                                  <span> = </span>
+                                  <div style={{
+                                    borderBottom: "1px solid #000",
+                                    minWidth: `${1.5 * 96}px`,
+                                    height: "16px",
+                                  }}></div>
+                                </div>
                               </div>
                             ) : null}
                           </div>
@@ -451,6 +527,35 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                               <span>=</span>
                               <span>{problem.result}</span>
                             </div>
+                          ) : problem.type === "algebra-equation" ? (
+                            <div>
+                              <div style={{
+                                fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+                                fontWeight: "normal",
+                                color: "#000",
+                                fontFamily: "Helvetica, Arial, sans-serif",
+                                marginBottom: "6px",
+                              }}>
+                                {renderVariableText(problem.equation || '', problem.variable)}
+                              </div>
+                              <div style={{
+                                fontSize: `${FONT_SIZES.problemText * 0.9}px`,
+                                fontWeight: "normal",
+                                color: "#000",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                fontFamily: "Helvetica, Arial, sans-serif",
+                              }}>
+                                {renderVariableText(problem.variable || 'x', problem.variable)}
+                                <span> = </span>
+                                <div style={{
+                                  borderBottom: "1px solid #000",
+                                  minWidth: "50px",
+                                  height: "16px",
+                                }}></div>
+                              </div>
+                            </div>
                           ) : (
                             <div style={{
                               fontSize: `${FONT_SIZES.problemText}px`,
@@ -490,6 +595,8 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                             color: "#000",
                             fontFamily: "Helvetica, Arial, sans-serif",
                             flexShrink: 0,
+                            width: '40px',
+                            textAlign: 'right'
                           }}>
                             {globalIndex + 1}.
                           </span>
@@ -624,6 +731,36 @@ const WorksheetPreview: React.FC<WorksheetPreviewProps> = ({
                           <span>{problem.rightOperand}</span>
                           <span>=</span>
                           <span>{problem.result}</span>
+                        </div>
+                      ) : problem.type === "algebra-equation" ? (
+                        <div>
+                          <div style={{
+                            fontSize: `${FONT_SIZES.problemText}px`,
+                            fontWeight: "normal",
+                            color: "#000",
+                            fontFamily: "Helvetica, Arial, sans-serif",
+                            lineHeight: "1.4",
+                            marginBottom: `${0.15 * 96}px`,
+                          }}>
+                            {renderVariableText(problem.equation || '', problem.variable)}
+                          </div>
+                          <div style={{
+                            fontSize: `${FONT_SIZES.problemText}px`,
+                            fontWeight: "normal",
+                            color: "#000",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            fontFamily: "Helvetica, Arial, sans-serif",
+                          }}>
+                            {renderVariableText(problem.variable || 'x', problem.variable)}
+                            <span> = </span>
+                            <div style={{
+                              borderBottom: "1px solid #000",
+                              minWidth: `${1.5 * 96}px`,
+                              height: "16px",
+                            }}></div>
+                          </div>
                         </div>
                       ) : (
                         <div style={{

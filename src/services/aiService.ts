@@ -22,6 +22,7 @@ export interface GenerationResponse {
     multipleChoice: number;
     wordProblems: number;
     fillBlanks: number;
+    algebraEquations: number;
   };
 }
 
@@ -46,9 +47,16 @@ SUPPORTED PROBLEM TYPES:
    - Fields: operator (string), rightOperand (string), result (string)
    - The blank is always the first operand (left side)
 
+5. "algebra-equation": Algebra equations with variables like "x + 5 = 12"
+   - Fields: equation (string), variable (string, default "x")
+   - Include equations with variables that students need to solve
+   - Use clear, simple equations appropriate for the grade level
+   - Variables typically: x, y, n, a, b, t
+
 ANALYSIS REQUIREMENTS:
 1. Extract the number of problems requested
-2. Determine the split between basic-equation, multiple-choice, word-problem, and fill-blanks (default to basic-equation if not specified)
+2. Determine the split between basic-equation, multiple-choice, word-problem, fill-blanks, and algebra-equation (default to basic-equation if not specified)
+3. For algebra requests, use algebra-equation type instead of fill-blanks
 3. Follow any specific rules mentioned (e.g., "sum equals 20", "numbers 1-10", etc.)
 
 RESPONSE FORMAT:
@@ -60,19 +68,22 @@ Return a JSON object with this exact structure:
     "multipleChoice": number,
     "wordProblems": number,
     "fillBlanks": number,
+    "algebraEquations": number,
     "rules": "description of rules followed"
   },
   "problems": [
     {
       "id": "unique-id",
-      "type": "basic-equation" | "multiple-choice" | "word-problem" | "fill-blanks",
+      "type": "basic-equation" | "multiple-choice" | "word-problem" | "fill-blanks" | "algebra-equation",
       "leftOperand": "string", // for basic-equation only
       "operator": "string", // for basic-equation only  
       "rightOperand": "string", // for basic-equation only
       "question": "string", // for multiple-choice only
       "options": ["A option", "B option", "C option", "D option"], // for multiple-choice only
       "problemText": "string", // for word-problem only
-      "result": "string" // for fill-blanks only (operator and rightOperand reused from basic-equation)
+      "result": "string", // for fill-blanks only (operator and rightOperand reused from basic-equation)
+      "equation": "string", // for algebra-equation only
+      "variable": "string" // for algebra-equation only (default "x")
     }
   ]
 }
@@ -89,7 +100,9 @@ IMPORTANT RULES:
 Examples:
 - "20 addition problems where the sum is 15" → Generate 20 basic-equation problems with various combinations that add to 15
 - "10 multiple choice questions about multiplication tables" → Generate 10 multiple-choice problems testing multiplication
-- "5 subtraction and 5 addition problems using numbers 1-10" → Generate 10 basic-equation problems split evenly`;
+- "5 subtraction and 5 addition problems using numbers 1-10" → Generate 10 basic-equation problems split evenly
+- "10 algebra problems solving for x" → Generate 10 algebra-equation problems with variable x
+- "one-step equations" → Generate algebra-equation problems like "x + 5 = 12"`;
 
 export class AIService {
   private genAI: GoogleGenerativeAI;
@@ -124,12 +137,13 @@ export class AIService {
       // Validate and clean up the problems
       const validatedProblems = this.validateAndCleanProblems(parsedResponse.problems);
       
-      // Calculate breakdown in single pass instead of 4 separate filter operations
+      // Calculate breakdown in single pass
       const breakdown = {
         basicEquations: 0,
         multipleChoice: 0,
         wordProblems: 0,
         fillBlanks: 0,
+        algebraEquations: 0,
       };
       
       validatedProblems.forEach(problem => {
@@ -137,6 +151,7 @@ export class AIService {
         else if (problem.type === 'multiple-choice') breakdown.multipleChoice++;
         else if (problem.type === 'word-problem') breakdown.wordProblems++;
         else if (problem.type === 'fill-blanks') breakdown.fillBlanks++;
+        else if (problem.type === 'algebra-equation') breakdown.algebraEquations++;
       });
       
       return {
@@ -160,7 +175,8 @@ export class AIService {
             id: problem.id || `ai-generated-${Date.now()}-${index}`,
             type: problem.type === 'multiple-choice' ? 'multiple-choice' : 
                   problem.type === 'word-problem' ? 'word-problem' :
-                  problem.type === 'fill-blanks' ? 'fill-blanks' : 'basic-equation',
+                  problem.type === 'fill-blanks' ? 'fill-blanks' :
+                  problem.type === 'algebra-equation' ? 'algebra-equation' : 'basic-equation',
           };
 
           if (cleanProblem.type === 'basic-equation') {
@@ -182,6 +198,12 @@ export class AIService {
             cleanProblem.operator = String(problem.operator);
             cleanProblem.rightOperand = String(problem.rightOperand);
             cleanProblem.result = String(problem.result);
+          } else if (cleanProblem.type === 'algebra-equation') {
+            if (!problem.equation) {
+              throw new Error('Missing required field for algebra equation');
+            }
+            cleanProblem.equation = String(problem.equation);
+            cleanProblem.variable = String(problem.variable || 'x');
           } else {
             if (!problem.question || !problem.options || !Array.isArray(problem.options)) {
               throw new Error('Missing required fields for multiple choice');

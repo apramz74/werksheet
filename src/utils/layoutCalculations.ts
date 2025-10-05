@@ -51,7 +51,8 @@ export const FONT_SIZES = {
  * Calculate the height a basic equation problem will take
  */
 export function calculateBasicEquationHeight(): number {
-  return SPACING.basicEquationHeight + SPACING.problemSpacing;
+  return SPACING.basicEquationHeight;
+  // Note: SPACING.problemSpacing is added separately in pagination logic
 }
 
 /**
@@ -60,8 +61,8 @@ export function calculateBasicEquationHeight(): number {
 export function calculateMultipleChoiceHeight(optionCount: number): number {
   return (
     SPACING.multipleChoiceQuestionHeight +
-    optionCount * SPACING.multipleChoiceOptionHeight +
-    SPACING.problemSpacing
+    optionCount * SPACING.multipleChoiceOptionHeight
+    // Note: SPACING.problemSpacing is added separately in pagination logic
   );
 }
 
@@ -76,8 +77,23 @@ export function calculateWordProblemHeight(problemText: string): number {
   return (
     SPACING.wordProblemBaseHeight +
     (estimatedLines - 1) * SPACING.wordProblemLineHeight + // Additional lines
-    SPACING.wordProblemAnswerLineHeight +
-    SPACING.problemSpacing
+    SPACING.wordProblemAnswerLineHeight
+    // Note: SPACING.problemSpacing is added separately in pagination logic
+  );
+}
+
+/**
+ * Calculate the height an algebra equation will take
+ */
+export function calculateAlgebraEquationHeight(): number {
+  // Algebra equations have two lines:
+  // 1. The equation line (e.g., "x + 8 = 17")
+  // 2. The variable = ____ line (e.g., "x = ____")
+  // Based on PDF rendering: 0.25 + 0.3 (problemSpacing added separately)
+  return (
+    0.25 + // First line spacing (equation to variable line)
+    SPACING.basicEquationHeight // Second line height (variable = ____)
+    // Note: SPACING.problemSpacing is added separately in pagination logic
   );
 }
 
@@ -93,6 +109,8 @@ export function calculateProblemHeight(problem: MathProblem, layout: string = 's
     return calculateMultipleChoiceHeight(problem.options?.length || 0);
   } else if (problem.type === 'word-problem') {
     return calculateWordProblemHeight(problem.problemText || '');
+  } else if (problem.type === 'algebra-equation') {
+    return calculateAlgebraEquationHeight();
   } else {
     return calculateBasicEquationHeight();
   }
@@ -106,6 +124,10 @@ function calculateTwoColumnProblemHeight(problem: MathProblem): number {
     // Match PDF rendering: 0.25 + (N * 0.2) + 0.1 (before font scaling)
     // Note: The 0.15 spacing is added separately in pagination logic
     return 0.25 + (problem.options?.length || 0) * 0.2 + 0.1;
+  } else if (problem.type === 'algebra-equation') {
+    // Match PDF rendering: returns 0.45 (before font scaling)
+    // Note: The 0.15 spacing is added separately in pagination logic
+    return 0.45;
   } else if (problem.type === 'fill-blanks' || problem.type === 'basic-equation') {
     // Match PDF rendering: returns 0.25 (before font scaling)
     // Note: The 0.15 spacing is added separately in pagination logic
@@ -242,17 +264,19 @@ function paginateWithFontScale(problems: MathProblem[], hasFootnote: boolean, la
     problems.forEach((problem) => {
       const baseProblemHeight = calculateProblemHeight(problem, 'single-column');
       const problemHeight = baseProblemHeight * fontScale;
+      const problemSpacing = SPACING.problemSpacing * fontScale;
+      const totalProblemHeight = problemHeight + problemSpacing;
       
       // Check if adding this problem would exceed page height
-      if (currentPageHeight + problemHeight > maxContentHeight && currentPage.length > 0) {
+      if (currentPageHeight + totalProblemHeight > maxContentHeight && currentPage.length > 0) {
         // Start a new page
         pages.push(currentPage);
         currentPage = [problem];
-        currentPageHeight = problemHeight;
+        currentPageHeight = totalProblemHeight;
       } else {
         // Add to current page
         currentPage.push(problem);
-        currentPageHeight += problemHeight;
+        currentPageHeight += totalProblemHeight;
       }
     });
   }

@@ -7,6 +7,35 @@ import {
   paginateProblems 
 } from './layoutCalculations';
 
+// Helper function to render text with styled variables in PDF
+const renderVariableTextPDF = (pdf: jsPDF, text: string, x: number, y: number, primaryVariable: string = 'x'): number => {
+  // Common algebra variables
+  const allVariables = [primaryVariable, 'x', 'y', 'z', 'n', 'a', 'b', 'c', 't', 'm'];
+  const uniqueVariables = allVariables.filter((v, i, arr) => arr.indexOf(v) === i);
+  
+  // Split text into parts handling coefficients (like 6x, 2y, etc.)
+  const variablePattern = new RegExp(`(\\d*)(${uniqueVariables.join('|')})`, 'g');
+  const parts = text.split(variablePattern);
+  
+  let currentX = x;
+  
+  parts.forEach((part) => {
+    if (uniqueVariables.includes(part)) {
+      // Render variable in italic
+      pdf.setFont('times', 'italic');
+      pdf.text(part, currentX, y);
+      currentX += pdf.getTextWidth(part);
+      pdf.setFont('helvetica', 'normal'); // Reset to normal
+    } else if (part) {
+      // Render regular text (including coefficients)
+      pdf.text(part, currentX, y);
+      currentX += pdf.getTextWidth(part);
+    }
+  });
+  
+  return currentX; // Return final X position
+};
+
 // Helper functions to determine layout suitability (shared with WorksheetPreview)
 const isCompactLayoutSuitable = (problem: MathProblem): boolean => {
   return problem.type === 'basic-equation' || problem.type === 'fill-blanks';
@@ -15,7 +44,8 @@ const isCompactLayoutSuitable = (problem: MathProblem): boolean => {
 const isTwoColumnSuitable = (problem: MathProblem): boolean => {
   return problem.type === 'basic-equation' || 
          problem.type === 'fill-blanks' || 
-         problem.type === 'multiple-choice';
+         problem.type === 'multiple-choice' ||
+         problem.type === 'algebra-equation';
 };
 
 // Render problem in compact format for PDF (like traditional worksheet)
@@ -110,6 +140,30 @@ const renderTwoColumnProblemPDF = (pdf: jsPDF, problem: MathProblem, globalIndex
     const blankWidth = pdf.getTextWidth('____');
     pdf.text(` ${problem.operator} ${problem.rightOperand} = ${problem.result}`, contentX + blankWidth, currentY);
     return 0.25 * fontScale;
+    
+  } else if (problem.type === 'algebra-equation') {
+    // Algebra equation - two lines: equation, then variable = ____
+    pdf.setFontSize(12 * fontScale);
+    
+    // First line: the equation with styled variables
+    renderVariableTextPDF(pdf, problem.equation || '', contentX, currentY, problem.variable);
+    currentY += 0.2 * fontScale;
+    
+    // Second line: variable = ____
+    const variable = problem.variable || 'x';
+    pdf.setFont('times', 'italic'); // Variable in italic
+    pdf.text(variable, contentX, currentY);
+    pdf.setFont('helvetica', 'normal'); // Back to normal
+    pdf.text(' = ', contentX + pdf.getTextWidth(variable), currentY);
+    
+    // Answer line
+    const variableLineWidth = pdf.getTextWidth(`${variable} = `);
+    const lineStartX = contentX + variableLineWidth;
+    const lineEndX = lineStartX + 0.7 * fontScale;
+    pdf.setLineWidth(0.005);
+    pdf.line(lineStartX, currentY + 0.02 * fontScale, lineEndX, currentY + 0.02 * fontScale);
+    
+    return 0.45 * fontScale; // Two lines plus spacing
     
   } else {
     // Basic equation - horizontal layout but more compact
@@ -282,6 +336,25 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
             pdf.setLineWidth(0.005);
             pdf.line(lineStartX, currentY + 0.02, lineEndX, currentY + 0.02);
             currentY += SPACING.basicEquationHeight;
+          } else if (problem.type === 'algebra-equation') {
+            pdf.setFont('helvetica', 'normal');
+            renderVariableTextPDF(pdf, problem.equation || '', margin + 0.3, currentY, problem.variable);
+            currentY += 0.25;
+            
+            // Variable = ____ line
+            const variable = problem.variable || 'x';
+            pdf.setFont('times', 'italic');
+            pdf.text(variable, margin + 0.3, currentY);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(' = ', margin + 0.3 + pdf.getTextWidth(variable), currentY);
+            
+            // Answer line
+            const variableLineWidth = pdf.getTextWidth(`${variable} = `);
+            const lineStartX = margin + 0.3 + variableLineWidth;
+            const lineEndX = lineStartX + 1.5;
+            pdf.setLineWidth(0.005);
+            pdf.line(lineStartX, currentY + 0.02, lineEndX, currentY + 0.02);
+            currentY += SPACING.basicEquationHeight;
           }
           currentY += SPACING.problemSpacing;
         }
@@ -358,6 +431,27 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
           
           leftColumnY = finalY + SPACING.basicEquationHeight + SPACING.problemSpacing;
           rightColumnY = leftColumnY;
+        } else if (problem.type === 'algebra-equation') {
+          pdf.setFont('helvetica', 'normal');
+          renderVariableTextPDF(pdf, problem.equation || '', margin + 0.3, leftColumnY, problem.variable);
+          leftColumnY += 0.25;
+          
+          // Variable = ____ line
+          const variable = problem.variable || 'x';
+          pdf.setFont('times', 'italic');
+          pdf.text(variable, margin + 0.3, leftColumnY);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(' = ', margin + 0.3 + pdf.getTextWidth(variable), leftColumnY);
+          
+          // Answer line
+          const variableLineWidth = pdf.getTextWidth(`${variable} = `);
+          const lineStartX = margin + 0.3 + variableLineWidth;
+          const lineEndX = lineStartX + 1.5;
+          pdf.setLineWidth(0.005);
+          pdf.line(lineStartX, leftColumnY + 0.02, lineEndX, leftColumnY + 0.02);
+          
+          leftColumnY += SPACING.basicEquationHeight + SPACING.problemSpacing;
+          rightColumnY = leftColumnY;
         }
       });
       
@@ -419,6 +513,26 @@ export const generateProgrammaticPDF = ({ problems, settings, filename = 'worksh
           
           const restOfEquation = ` ${problem.operator} ${problem.rightOperand} = ${problem.result}`;
           pdf.text(restOfEquation, lineEndX + 0.1 * fontScale, currentY);
+          currentY += SPACING.basicEquationHeight * fontScale;
+          
+        } else if (problem.type === 'algebra-equation') {
+          pdf.setFont('helvetica', 'normal');
+          renderVariableTextPDF(pdf, problem.equation || '', questionStartX, currentY, problem.variable);
+          currentY += 0.25 * fontScale;
+          
+          // Variable = ____ line
+          const variable = problem.variable || 'x';
+          pdf.setFont('times', 'italic');
+          pdf.text(variable, questionStartX, currentY);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(' = ', questionStartX + pdf.getTextWidth(variable), currentY);
+          
+          // Answer line
+          const variableLineWidth = pdf.getTextWidth(`${variable} = `);
+          const lineStartX = questionStartX + variableLineWidth;
+          const lineEndX = lineStartX + 1.5 * fontScale;
+          pdf.setLineWidth(0.005);
+          pdf.line(lineStartX, currentY + 0.02 * fontScale, lineEndX, currentY + 0.02 * fontScale);
           currentY += SPACING.basicEquationHeight * fontScale;
           
         } else {

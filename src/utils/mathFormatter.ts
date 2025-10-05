@@ -23,6 +23,16 @@ export class MathFormatter {
     return this.OPERATORS.includes(operator);
   }
 
+  public static validateAlgebraEquation(equation: string): boolean {
+    if (!equation || !equation.trim()) return false;
+    
+    // Basic validation: should contain an equals sign and at least one variable
+    const hasEquals = equation.includes('=');
+    const hasVariable = /[a-zA-Z]/.test(equation);
+    
+    return hasEquals && hasVariable;
+  }
+
   public static validateProblem(problem: MathProblem): boolean {
     if (problem.type === 'multiple-choice') {
       return (
@@ -40,6 +50,8 @@ export class MathFormatter {
         Boolean(problem.result) &&
         this.validateNumber(problem.result || '')
       );
+    } else if (problem.type === 'algebra-equation') {
+      return this.validateAlgebraEquation(problem.equation || '');
     } else {
       // Basic equation validation
       return (
@@ -52,13 +64,15 @@ export class MathFormatter {
     }
   }
 
-  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' = 'basic-equation'): MathProblem {
+  public static createBlankProblem(type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' | 'algebra-equation' = 'basic-equation'): MathProblem {
     if (type === 'multiple-choice') {
       return this.createBlankMultipleChoice();
     } else if (type === 'word-problem') {
       return this.createBlankWordProblem();
     } else if (type === 'fill-blanks') {
       return this.createBlankFillBlanks();
+    } else if (type === 'algebra-equation') {
+      return this.createBlankAlgebraEquation();
     } else {
       return {
         id: Math.random().toString(36).substr(2, 9),
@@ -101,6 +115,16 @@ export class MathFormatter {
     };
   }
 
+  public static createBlankAlgebraEquation(): MathProblem {
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'algebra-equation',
+      equation: 'x + 5 = 12',
+      variable: 'x',
+      isEditing: true
+    };
+  }
+
   public static formatForDisplay(problem: MathProblem): string {
     if (problem.type === 'multiple-choice') {
       const optionsText = problem.options?.map((option, index) => 
@@ -111,9 +135,18 @@ export class MathFormatter {
       return `${problem.problemText || ''}\n____________________`;
     } else if (problem.type === 'fill-blanks') {
       return `____ ${problem.operator || ''} ${problem.rightOperand || ''} = ${problem.result || ''}`;
+    } else if (problem.type === 'algebra-equation') {
+      const variable = problem.variable || 'x';
+      return `${problem.equation || ''}\n${variable} = ____`;
     } else {
       return `${problem.leftOperand || ''} ${problem.operator || ''} ${problem.rightOperand || ''} = ____`;
     }
+  }
+
+  // Helper function to render variables with proper styling
+  public static renderVariableText(text: string, variable: string = 'x'): string {
+    // This will be used by components to identify variables for styling
+    return text.replace(new RegExp(`\\b${variable}\\b`, 'g'), `<var>${variable}</var>`);
   }
 
   // Legacy support for migrating existing data

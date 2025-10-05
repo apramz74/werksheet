@@ -43,7 +43,7 @@ function App() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(settings.title);
 
-  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
+  const createNewProblem = (type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' | 'algebra-equation' = 'basic-equation'): MathProblem => MathFormatter.createBlankProblem(type);
 
   const handleNavigationChange = (currentPage: number, totalPages: number, handlers: { handlePrevPage: () => void, handleNextPage: () => void }) => {
     setNavigationState({ currentPage, totalPages, handlers });
@@ -65,7 +65,7 @@ function App() {
     setProblems(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' = 'basic-equation') => {
+  const handleAddProblem = (afterIndex: number, type: 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' | 'algebra-equation' = 'basic-equation') => {
     setProblems(prev => {
       const newProblems = [...prev];
       const newProblem = createNewProblem(type);
@@ -81,8 +81,8 @@ function App() {
   };
 
   const handleCreateProblem = (problemType: string) => {
-    if (problemType === 'basic-equation' || problemType === 'multiple-choice' || problemType === 'word-problem' || problemType === 'fill-blanks') {
-      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks');
+    if (problemType === 'basic-equation' || problemType === 'multiple-choice' || problemType === 'word-problem' || problemType === 'fill-blanks' || problemType === 'algebra-equation') {
+      handleAddProblem(pendingAfterIndex, problemType as 'basic-equation' | 'multiple-choice' | 'word-problem' | 'fill-blanks' | 'algebra-equation');
     }
     setShowCreateModal(false);
     setPendingAfterIndex(-1);

@@ -19,7 +19,7 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   onAddAfter 
 }) => {
   const [isEditing, setIsEditing] = useState(problem.isEditing || false);
-  const [editingField, setEditingField] = useState<'left' | 'operator' | 'right' | 'result' | 'question' | 'problemText' | number | null>(null);
+  const [editingField, setEditingField] = useState<'left' | 'operator' | 'right' | 'result' | 'question' | 'problemText' | 'equation' | 'variable' | number | null>(null);
   
   // Basic equation state
   const [leftOperand, setLeftOperand] = useState(problem.leftOperand || '');
@@ -36,6 +36,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   // Fill-blanks state (reuses operator and rightOperand, adds result)
   const [result, setResult] = useState(problem.result || '');
   
+  // Algebra equation state
+  const [equation, setEquation] = useState(problem.equation || '');
+  const [variable, setVariable] = useState(problem.variable || 'x');
+  
   const [showEditModal, setShowEditModal] = useState(false);
   const leftInputRef = useRef<HTMLInputElement>(null);
   const rightInputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +48,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
   const questionInputRef = useRef<HTMLInputElement>(null);
   const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const problemTextRef = useRef<HTMLTextAreaElement>(null);
+  const equationInputRef = useRef<HTMLInputElement>(null);
+  const variableSelectRef = useRef<HTMLSelectElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,6 +61,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
         setEditingField('problemText');
       } else if (problem.type === 'fill-blanks') {
         setEditingField('operator');
+      } else if (problem.type === 'algebra-equation') {
+        setEditingField('equation');
       } else {
         setEditingField('left');
       }
@@ -78,6 +86,11 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       } else if (editingField === 'problemText' && problemTextRef.current) {
         problemTextRef.current.focus();
         problemTextRef.current.select();
+      } else if (editingField === 'equation' && equationInputRef.current) {
+        equationInputRef.current.focus();
+        equationInputRef.current.select();
+      } else if (editingField === 'variable' && variableSelectRef.current) {
+        variableSelectRef.current.focus();
       } else if (typeof editingField === 'number' && optionInputRefs.current[editingField]) {
         optionInputRefs.current[editingField]?.focus();
         optionInputRefs.current[editingField]?.select();
@@ -99,6 +112,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       setOperator(problem.operator || '+');
       setRightOperand(problem.rightOperand || '');
       setResult(problem.result || '');
+    } else if (problem.type === 'algebra-equation') {
+      setEditingField('equation');
+      setEquation(problem.equation || '');
+      setVariable(problem.variable || 'x');
     } else {
       setEditingField('left');
       setLeftOperand(problem.leftOperand || '');
@@ -129,6 +146,13 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
         operator: MathFormatter.normalizeOperator(operator),
         rightOperand,
         result,
+        isEditing: false
+      };
+    } else if (problem.type === 'algebra-equation') {
+      updatedProblem = {
+        ...problem,
+        equation,
+        variable,
         isEditing: false
       };
     } else {
@@ -248,6 +272,10 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
       currentProblem = isEditing ? 
         { ...problem, operator, rightOperand, result } : 
         problem;
+    } else if (problem.type === 'algebra-equation') {
+      currentProblem = isEditing ? 
+        { ...problem, equation, variable } : 
+        problem;
     } else {
       currentProblem = isEditing ? 
         { ...problem, leftOperand, operator, rightOperand } : 
@@ -261,6 +289,8 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
         return { isValid: false, message: 'Invalid word problem' };
       } else if (problem.type === 'fill-blanks') {
         return { isValid: false, message: 'Invalid fill-blanks problem' };
+      } else if (problem.type === 'algebra-equation') {
+        return { isValid: false, message: 'Invalid algebra equation' };
       } else {
         return { isValid: false, message: 'Invalid math problem' };
       }
@@ -758,6 +788,115 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                 }}
               />
             </div>
+          ) : problem.type === 'algebra-equation' ? (
+            /* Algebra Equation Editing */
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: '12px', 
+                  fontWeight: '500', 
+                  color: '#4a5568',
+                  marginBottom: '4px'
+                }}>
+                  Equation:
+                </label>
+                <input
+                  ref={equationInputRef}
+                  type="text"
+                  value={equation}
+                  onChange={(e) => setEquation(e.target.value)}
+                  onFocus={() => setEditingField('equation')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleFinishEdit();
+                    } else if (e.key === 'Tab') {
+                      e.preventDefault();
+                      setEditingField('variable');
+                      setTimeout(() => variableSelectRef.current?.focus(), 0);
+                    } else if (e.key === 'Escape') {
+                      setIsEditing(false);
+                      setEditingField(null);
+                      setEquation(problem.equation || '');
+                      setVariable(problem.variable || 'x');
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const relatedTarget = e.relatedTarget as HTMLElement;
+                    if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
+                      handleFinishEdit();
+                    }
+                  }}
+                  placeholder="Enter equation (e.g., x + 5 = 12)"
+                  style={{
+                    width: '100%',
+                    border: editingField === 'equation' ? '2px solid #3182ce' : '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '8px 12px',
+                    fontSize: '16px',
+                    fontFamily: 'monospace',
+                    backgroundColor: editingField === 'equation' ? '#f0f8ff' : 'transparent',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: '12px', 
+                  fontWeight: '500', 
+                  color: '#4a5568',
+                  marginBottom: '4px'
+                }}>
+                  Variable:
+                </label>
+                <select
+                  ref={variableSelectRef}
+                  value={variable}
+                  onChange={(e) => setVariable(e.target.value)}
+                  onFocus={() => setEditingField('variable')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleFinishEdit();
+                    } else if (e.key === 'Escape') {
+                      setIsEditing(false);
+                      setEditingField(null);
+                      setEquation(problem.equation || '');
+                      setVariable(problem.variable || 'x');
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const relatedTarget = e.relatedTarget as HTMLElement;
+                    if (!relatedTarget || !containerRef.current?.contains(relatedTarget)) {
+                      handleFinishEdit();
+                    }
+                  }}
+                  style={{
+                    border: editingField === 'variable' ? '2px solid #3182ce' : '1px solid #ddd',
+                    borderRadius: '4px',
+                    padding: '8px 12px',
+                    fontSize: '16px',
+                    fontFamily: 'serif',
+                    fontStyle: 'italic',
+                    backgroundColor: editingField === 'variable' ? '#f0f8ff' : '#f8f9fa',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    color: '#2563eb'
+                  }}
+                >
+                  <option value="x">x</option>
+                  <option value="y">y</option>
+                  <option value="n">n</option>
+                  <option value="a">a</option>
+                  <option value="b">b</option>
+                  <option value="t">t</option>
+                </select>
+              </div>
+            </div>
           ) : (
             /* Basic Equation Editing */
             <div style={{ 
@@ -884,7 +1023,9 @@ const ProblemEditor: React.FC<ProblemEditorProps> = ({
                 ? 'Ctrl+Enter: Save • Esc: Cancel'
                 : problem.type === 'fill-blanks'
                   ? 'Enter: Save • Tab: Next field • Esc: Cancel'
-                  : 'Enter: Save • Tab: Next field • Esc: Cancel'
+                  : problem.type === 'algebra-equation'
+                    ? 'Enter: Save • Tab: Next field • Esc: Cancel'
+                    : 'Enter: Save • Tab: Next field • Esc: Cancel'
             }
           </div>
 
