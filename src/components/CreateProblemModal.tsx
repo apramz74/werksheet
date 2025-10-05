@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MathProblem } from '../types';
-import { aiService, GenerationResponse } from '../services/aiService';
+import { aiService } from '../services/aiService';
 
 interface CreateProblemModalProps {
   isOpen: boolean;
@@ -22,7 +22,6 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
   const [description, setDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [generationResult, setGenerationResult] = useState<GenerationResponse | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,16 +105,18 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
 
     setIsGenerating(true);
     setError(null);
-    setGenerationResult(null);
 
     try {
       const result = await aiService.generateProblems({ description: description.trim() });
-      setGenerationResult(result);
       
       if (result.problems.length === 0) {
         setError('No valid problems were generated. Please try a different description.');
         return;
       }
+
+      // Directly add problems and close modal
+      onAiProblemsGenerated(result.problems);
+      handleClose();
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate problems');
@@ -124,17 +125,9 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
     }
   };
 
-  const handleAddAiProblems = () => {
-    if (generationResult?.problems) {
-      onAiProblemsGenerated(generationResult.problems);
-      handleClose();
-    }
-  };
-
   const handleClose = () => {
     setDescription('');
     setError(null);
-    setGenerationResult(null);
     setIsGenerating(false);
     setActiveSection(defaultSection);
     onClose();
@@ -297,178 +290,119 @@ const CreateProblemModal: React.FC<CreateProblemModalProps> = ({
           {/* AI Section Content */}
           {activeSection === 'ai' && (
             <div style={{ padding: '20px' }}>
-              {!generationResult ? (
-                <>
-                  {/* Description Input */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="e.g., 20 addition problems where the sum is always 15"
-                      rows={3}
-                      style={{
-                        width: '100%',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '6px',
-                        padding: '12px',
-                        fontSize: '14px',
-                        fontFamily: 'inherit',
-                        resize: 'vertical',
-                        boxSizing: 'border-box',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#3b82f6';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#e5e7eb';
-                      }}
-                    />
-                  </div>
-
-                  {/* Example Prompts */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <p style={{
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      color: '#6b7280',
-                      marginBottom: '8px'
-                    }}>
-                      Try these examples:
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {examplePrompts.slice(0, 3).map((prompt, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setDescription(prompt)}
-                          style={{
-                            padding: '6px 10px',
-                            backgroundColor: '#f9fafb',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            color: '#4b5563',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f9fafb';
-                          }}
-                        >
-                          "{prompt}"
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Error Message */}
-                  {error && (
-                    <div style={{
-                      backgroundColor: '#fef2f2',
-                      border: '1px solid #fecaca',
-                      borderRadius: '6px',
-                      padding: '10px',
-                      marginBottom: '16px',
-                      color: '#dc2626',
-                      fontSize: '12px'
-                    }}>
-                      {error}
-                    </div>
-                  )}
-
-                  {/* Generate Button */}
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !description.trim()}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      backgroundColor: isGenerating || !description.trim() ? '#9ca3af' : '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: isGenerating || !description.trim() ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    {isGenerating && (
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        border: '2px solid rgba(255,255,255,0.3)',
-                        borderTop: '2px solid white',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                    )}
-                    {isGenerating ? 'Generating...' : 'Generate problems'}
-                  </button>
-                </>
-              ) : (
-                /* Generation Results */
-                <>
-                  <div style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
+              {/* Description Input */}
+              <div style={{ marginBottom: '16px' }}>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g., 20 addition problems where the sum is always 15"
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    border: '2px solid #e5e7eb',
                     borderRadius: '6px',
                     padding: '12px',
-                    marginBottom: '16px'
-                  }}>
-                    <h4 style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#15803d',
-                      margin: '0'
-                    }}>
-                      ✅ Generated {generationResult.totalGenerated} problems
-                    </h4>
-                  </div>
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e5e7eb';
+                  }}
+                />
+              </div>
 
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '8px' }}>
+              {/* Example Prompts */}
+              <div style={{ marginBottom: '16px' }}>
+                <p style={{
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  color: '#6b7280',
+                  marginBottom: '8px'
+                }}>
+                  Try these examples:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {examplePrompts.slice(0, 3).map((prompt, index) => (
                     <button
-                      onClick={() => setGenerationResult(null)}
+                      key={index}
+                      onClick={() => setDescription(prompt)}
                       style={{
-                        flex: 1,
-                        padding: '10px',
+                        padding: '6px 10px',
                         backgroundColor: '#f9fafb',
-                        color: '#374151',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '4px',
                         fontSize: '12px',
-                        cursor: 'pointer'
+                        color: '#4b5563',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f9fafb';
                       }}
                     >
-                      Try again
+                      "{prompt}"
                     </button>
-                    <button
-                      onClick={handleAddAiProblems}
-                      style={{
-                        flex: 2,
-                        padding: '10px',
-                        backgroundColor: '#059669',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Add to worksheet
-                    </button>
-                  </div>
-                </>
+                  ))}
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  marginBottom: '16px',
+                  color: '#dc2626',
+                  fontSize: '12px'
+                }}>
+                  {error}
+                </div>
               )}
+
+              {/* Generate Button */}
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !description.trim()}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: isGenerating || !description.trim() ? '#9ca3af' : '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: isGenerating || !description.trim() ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isGenerating && (
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTop: '2px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                )}
+                {isGenerating ? 'Generating...' : 'Generate problems'}
+              </button>
             </div>
           )}
         </div>

@@ -10,8 +10,10 @@ import Navigation from './components/Navigation';
 import PageHeader from './components/PageHeader';
 import { generateProgrammaticPDF } from './utils/pdfExport';
 import { MathFormatter } from './utils/mathFormatter';
+import { ToastProvider, useToast } from './contexts/ToastContext';
 
-function App() {
+function AppContent() {
+  const { showToast } = useToast();
   const [settings, setSettings] = useState<WorksheetSettings>({
     title: 'Math Worksheet',
     numberOfProblems: 5,
@@ -116,6 +118,7 @@ function App() {
 
   const handleAiProblemsGenerated = (generatedProblems: MathProblem[]) => {
     setProblems(prev => [...prev, ...generatedProblems]);
+    showToast(`Successfully generated ${generatedProblems.length} problems!`, 'success');
   };
 
   const handleAdvancedSettingsSave = (newSettings: WorksheetSettings) => {
@@ -546,6 +549,14 @@ function App() {
         onSave={handleAdvancedSettingsSave}
       />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 
